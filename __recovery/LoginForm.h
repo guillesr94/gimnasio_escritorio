@@ -1,21 +1,28 @@
 //---------------------------------------------------------------------------
 
-#ifndef VentasH
-#define VentasH
+#ifndef LoginFormH
+#define LoginFormH
 //---------------------------------------------------------------------------
 #include <System.Classes.hpp>
 #include <Vcl.Controls.hpp>
 #include <Vcl.StdCtrls.hpp>
 #include <Vcl.Forms.hpp>
+#include "HTTPConnector.h"
 //---------------------------------------------------------------------------
-class TVentas : public TForm
+class TLoginForm : public TForm
 {
 __published:	// IDE-managed Components
-private:	// User declarations
-public:		// User declarations
-	__fastcall TVentas(TComponent* Owner);
+	TLabel *Login;
+	TEdit *email;
+	TEdit *password;
+	TButton *Iniciar;
+	void __fastcall IniciarClick(TObject *Sender);
+private:
+HTTPConnector *api;
+public:
+__fastcall TLoginForm(TComponent* Owner);
 };
 //---------------------------------------------------------------------------
-extern PACKAGE TVentas *Ventas;
+extern PACKAGE TLoginForm *LoginForm;
 //---------------------------------------------------------------------------
 #endif

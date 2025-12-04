@@ -179,6 +179,12 @@
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
     </PropertyGroup>
     <ItemGroup>
+        <CppCompile Include="Alumnos.cpp">
+            <Form>Form3</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>Alumnos.h</DependentOn>
+            <BuildOrder>4</BuildOrder>
+        </CppCompile>
         <CppCompile Include="gim_admin.cpp">
             <BuildOrder>0</BuildOrder>
         </CppCompile>
@@ -192,14 +198,29 @@
             <DependentOn>LoginForm.h</DependentOn>
             <BuildOrder>2</BuildOrder>
         </CppCompile>
-        <CppCompile Include="Unit2.cpp">
+        <CppCompile Include="Productos.cpp">
+            <Form>Form4</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>Productos.h</DependentOn>
+            <BuildOrder>5</BuildOrder>
+        </CppCompile>
+        <CppCompile Include="Profesores.cpp">
             <Form>Form2</Form>
             <FormType>dfm</FormType>
-            <DependentOn>Unit2.h</DependentOn>
+            <DependentOn>Profesores.h</DependentOn>
             <BuildOrder>3</BuildOrder>
         </CppCompile>
+        <CppCompile Include="Ventas.cpp">
+            <Form>Form5</Form>
+            <FormType>dfm</FormType>
+            <DependentOn>Ventas.h</DependentOn>
+            <BuildOrder>6</BuildOrder>
+        </CppCompile>
+        <FormResources Include="Profesores.dfm"/>
         <FormResources Include="LoginForm.dfm"/>
-        <FormResources Include="Unit2.dfm"/>
+        <FormResources Include="Alumnos.dfm"/>
+        <FormResources Include="Productos.dfm"/>
+        <FormResources Include="Ventas.dfm"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

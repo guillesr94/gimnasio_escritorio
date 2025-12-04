@@ -11,7 +11,6 @@
 class TVentas : public TForm
 {
 __published:	// IDE-managed Components
-	void __fastcall FormCreate(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TVentas(TComponent* Owner);
