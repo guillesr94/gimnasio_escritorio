@@ -25,6 +25,7 @@ object Productos: TProductos
     Height = 25
     Caption = 'Profesores'
     TabOrder = 0
+    OnClick = BtnVentanaProfesoresClick
   end
   object BtnVentanaCLientes: TButton
     Left = 168
@@ -33,6 +34,7 @@ object Productos: TProductos
     Height = 25
     Caption = 'Clientes'
     TabOrder = 1
+    OnClick = BtnVentanaCLientesClick
   end
   object BtnVentanaVentas: TButton
     Left = 304
@@ -41,6 +43,7 @@ object Productos: TProductos
     Height = 25
     Caption = 'Ventas'
     TabOrder = 2
+    OnClick = BtnVentanaVentasClick
   end
   object BtnVentanaProductos: TButton
     Left = 440
@@ -49,5 +52,6 @@ object Productos: TProductos
     Height = 25
     Caption = 'Productos'
     TabOrder = 3
+    OnClick = BtnVentanaProductosClick
   end
 end

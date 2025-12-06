@@ -17,6 +17,10 @@ __published:	// IDE-managed Components
 	TButton *BtnVentanaCLientes;
 	TButton *BtnVentanaVentas;
 	TButton *BtnVentanaProductos;
+	void __fastcall BtnVentanaProfesoresClick(TObject *Sender);
+	void __fastcall BtnVentanaCLientesClick(TObject *Sender);
+	void __fastcall BtnVentanaVentasClick(TObject *Sender);
+	void __fastcall BtnVentanaProductosClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TProductos(TComponent* Owner);

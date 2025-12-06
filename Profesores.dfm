@@ -18,4 +18,40 @@ object Profesores: TProfesores
     Height = 15
     Caption = 'Profesores'
   end
+  object BtnVentanaProfesores: TButton
+    Left = 32
+    Top = 8
+    Width = 75
+    Height = 25
+    Caption = 'Profesores'
+    TabOrder = 0
+    OnClick = BtnVentanaProfesoresClick
+  end
+  object BtnVentanaCLientes: TButton
+    Left = 168
+    Top = 8
+    Width = 75
+    Height = 25
+    Caption = 'Clientes'
+    TabOrder = 1
+    OnClick = BtnVentanaCLientesClick
+  end
+  object BtnVentanaVentas: TButton
+    Left = 304
+    Top = 8
+    Width = 75
+    Height = 25
+    Caption = 'Ventas'
+    TabOrder = 2
+    OnClick = BtnVentanaVentasClick
+  end
+  object BtnVentanaProductos: TButton
+    Left = 440
+    Top = 8
+    Width = 75
+    Height = 25
+    Caption = 'Productos'
+    TabOrder = 3
+    OnClick = BtnVentanaProductosClick
+  end
 end

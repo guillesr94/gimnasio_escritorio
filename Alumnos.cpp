@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+﻿//---------------------------------------------------------------------------
 
 #include <vcl.h>
 #pragma hdrstop
@@ -8,6 +8,9 @@
 #include "Alumnos.h"
 #include "Ventas.h"
 #include "Productos.h"
+
+#include "RequestHttp.h"
+
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
@@ -57,5 +60,24 @@ void __fastcall TAlumnos::BtnVentanaProductosClick(TObject *Sender)
 
 	this->Close();
 }
+//---------------------------------------------------------------------------
+
+void __fastcall TAlumnos::FormShow(TObject *Sender)
+{
+    Memo1->Clear();
+
+    // 1. HTTP con 2 parámetros
+    String json = HttpPost(
+        L"/gimnasio_api/Admin/consultar_lista_alumnos.php",
+        ""  // ← DATOS VACÍOS PERO OBLIGATORIOS
+    );
+
+    // 2. Mostrar directamente para ver formato
+    Memo1->Text = json;
+
+    // O usar ShowMessage para ver
+    // ShowMessage("JSON: " + json.SubString(1, 500));
+}
+
 //---------------------------------------------------------------------------
 

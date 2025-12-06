@@ -10,6 +10,7 @@ object Alumnos: TAlumnos
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  OnShow = FormShow
   TextHeight = 15
   object Label1: TLabel
     Left = 32
@@ -53,5 +54,14 @@ object Alumnos: TAlumnos
     Caption = 'Productos'
     TabOrder = 3
     OnClick = BtnVentanaProductosClick
+  end
+  object Memo1: TMemo
+    Left = 32
+    Top = 112
+    Width = 483
+    Height = 305
+    Lines.Strings = (
+      'Memo1')
+    TabOrder = 4
   end
 end
