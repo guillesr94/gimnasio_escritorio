@@ -1,4 +1,4 @@
-﻿object LoginForm: TLoginForm
+object LoginForm: TLoginForm
   Left = 0
   Top = 0
   Caption = 'LoginForm'
@@ -18,21 +18,21 @@
     Height = 15
     Caption = 'Login'
   end
-  object usuario: TEdit
+  object email: TEdit
     Left = 256
     Top = 96
     Width = 121
     Height = 23
     TabOrder = 0
-    Text = 'usuario'
+    Text = 'email'
   end
-  object Contraseña: TEdit
+  object password: TEdit
     Left = 256
     Top = 168
     Width = 121
     Height = 23
     TabOrder = 1
-    Text = 'Contrase'#241'a'
+    Text = 'password'
   end
   object Iniciar: TButton
     Left = 280
@@ -41,5 +41,6 @@
     Height = 25
     Caption = 'Iniciar'
     TabOrder = 2
+    OnClick = IniciarClick
   end
 end

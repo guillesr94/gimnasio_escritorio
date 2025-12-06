@@ -11,11 +11,13 @@
 #include "Productos.h"
 #include "Ventas.h"
 //---------------------------------------------------------------------------
+USEFORM("Productos.cpp", Form4);
 USEFORM("Profesores.cpp", Form2);
+USEFORM("Ventas.cpp", Form5);
 USEFORM("LoginForm.cpp", Form1);
 USEFORM("Alumnos.cpp", Form3);
-USEFORM("Productos.cpp", Form4);
-USEFORM("Ventas.cpp", Form5);
+USEFORM("Menu.cpp", MenuForm);
+
 //---------------------------------------------------------------------------
 int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {
@@ -28,6 +30,7 @@ int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 		Application->CreateForm(__classid(TAlumnos), &Alumnos);
 		Application->CreateForm(__classid(TProductos), &Productos);
 		Application->CreateForm(__classid(TVentas), &Ventas);
+		Application->CreateForm(__classid(TMenuForm), &MenuForm);
 		Application->Run();
 	}
 	catch (Exception &exception)

@@ -11,6 +11,7 @@
 class TVentas : public TForm
 {
 __published:	// IDE-managed Components
+	TLabel *Label1;
 private:	// User declarations
 public:		// User declarations
 	__fastcall TVentas(TComponent* Owner);

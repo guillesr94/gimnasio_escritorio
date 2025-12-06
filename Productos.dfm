@@ -11,4 +11,11 @@ object Productos: TProductos
   Font.Name = 'Segoe UI'
   Font.Style = []
   TextHeight = 15
+  object Label1: TLabel
+    Left = 72
+    Top = 56
+    Width = 54
+    Height = 15
+    Caption = 'Productos'
+  end
 end
