@@ -1,7 +1,7 @@
-object Alumnos: TAlumnos
+object Productos: TProductos
   Left = 0
   Top = 0
-  Caption = 'Form3'
+  Caption = 'Form4'
   ClientHeight = 441
   ClientWidth = 624
   Color = clBtnFace
@@ -12,11 +12,11 @@ object Alumnos: TAlumnos
   Font.Style = []
   TextHeight = 15
   object Label1: TLabel
-    Left = 32
-    Top = 55
-    Width = 48
+    Left = 72
+    Top = 56
+    Width = 54
     Height = 15
-    Caption = 'Alumnos'
+    Caption = 'Productos'
   end
   object BtnVentanaProfesores: TButton
     Left = 32

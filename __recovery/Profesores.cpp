@@ -3,25 +3,20 @@
 #include <vcl.h>
 #pragma hdrstop
 
-#include "Alumnos.h"
 #include "Profesores.h"
-#include "Alumnos.h"
-#include "Ventas.h"
-#include "Productos.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
-TAlumnos *Alumnos;
+TProfesores *Profesores;
 //---------------------------------------------------------------------------
-__fastcall TAlumnos::TAlumnos(TComponent* Owner)
+__fastcall TProfesores::TProfesores(TComponent* Owner)
 	: TForm(Owner)
 {
 }
 //---------------------------------------------------------------------------
-
-void __fastcall TAlumnos::BtnVentanaProfesoresClick(TObject *Sender)
+void __fastcall TProfesores::BtnVentanaProfesoresClick(TObject *Sender)
 {
-	  Profesores = new TProfesores(this);
+    Profesores = new TProfesores(this);
 	Profesores->Show();
 
 
@@ -29,9 +24,9 @@ void __fastcall TAlumnos::BtnVentanaProfesoresClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TAlumnos::BtnVentanaCLientesClick(TObject *Sender)
+void __fastcall TProfesores::BtnVentanaCLientesClick(TObject *Sender)
 {
-		 Alumnos = new TAlumnos(this);
+   Alumnos = new TAlumnos(this);
 	Alumnos->Show();
 
 
@@ -39,9 +34,9 @@ void __fastcall TAlumnos::BtnVentanaCLientesClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TAlumnos::BtnVentanaVentasClick(TObject *Sender)
+void __fastcall TProfesores::BtnVentanaVentasClick(TObject *Sender)
 {
-			 Ventas = new TVentas(this);
+    Ventas = new TVentas(this);
 	Ventas->Show();
 
 
@@ -49,9 +44,9 @@ void __fastcall TAlumnos::BtnVentanaVentasClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TAlumnos::BtnVentanaProductosClick(TObject *Sender)
+void __fastcall TProfesores::BtnVentanaProductosClick(TObject *Sender)
 {
-	 Productos = new TProductos(this);
+    	 Productos = new TProductos(this);
 	Productos->Show();
 
 

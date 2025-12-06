@@ -12,15 +12,15 @@ object MenuForm: TMenuForm
   Font.Style = []
   TextHeight = 15
   object Label1: TLabel
-    Left = 136
-    Top = 168
+    Left = 186
+    Top = 136
     Width = 193
     Height = 153
     Caption = 'Bienvenido'
   end
   object BtnVentanaProfesores: TButton
     Left = 32
-    Top = 24
+    Top = 8
     Width = 75
     Height = 25
     Caption = 'Profesores'
@@ -29,7 +29,7 @@ object MenuForm: TMenuForm
   end
   object BtnVentanaCLientes: TButton
     Left = 168
-    Top = 24
+    Top = 8
     Width = 75
     Height = 25
     Caption = 'Clientes'
@@ -38,7 +38,7 @@ object MenuForm: TMenuForm
   end
   object BtnVentanaVentas: TButton
     Left = 304
-    Top = 24
+    Top = 8
     Width = 75
     Height = 25
     Caption = 'Ventas'
@@ -47,7 +47,7 @@ object MenuForm: TMenuForm
   end
   object BtnVentanaProductos: TButton
     Left = 440
-    Top = 24
+    Top = 8
     Width = 75
     Height = 25
     Caption = 'Productos'
