@@ -3,6 +3,8 @@
 #include <vcl.h>
 #pragma hdrstop
 
+#include <System.JSON.hpp>
+
 #include "Alumnos.h"
 #include "Profesores.h"
 #include "Alumnos.h"
@@ -64,19 +66,80 @@ void __fastcall TAlumnos::BtnVentanaProductosClick(TObject *Sender)
 
 void __fastcall TAlumnos::FormShow(TObject *Sender)
 {
-    Memo1->Clear();
+	// 1. Limpiar la lista visual anterior para evitar duplicados
+	// Recorremos hacia atrás para borrar los componentes hijos del ScrollBox
+	for (int i = ScrollBoxAlumnos->ControlCount - 1; i >= 0; i--) {
+		delete ScrollBoxAlumnos->Controls[i];
+	}
 
-    // 1. HTTP con 2 parámetros
-    String json = HttpPost(
-        L"/gimnasio_api/Admin/consultar_lista_alumnos.php",
-        ""  // ← DATOS VACÍOS PERO OBLIGATORIOS
-    );
+	// 2. Pedir datos
+	String json = HttpPost(
+		L"/gimnasio_api/Admin/consultar_lista_alumnos.php",
+		""
+	);
 
-    // 2. Mostrar directamente para ver formato
-    Memo1->Text = json;
+	// 3. Procesar JSON y Generar controles dinámicos
+	TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
 
-    // O usar ShowMessage para ver
-    // ShowMessage("JSON: " + json.SubString(1, 500));
+	if (jsonRoot)
+	{
+		try
+		{
+			TJSONArray* dataArray = (TJSONArray*)jsonRoot->GetValue("data");
+
+			if (dataArray && !dataArray->Null)
+			{
+				// Recorremos cada alumno
+				for (int i = 0; i < dataArray->Count; i++)
+				{
+					TJSONObject* alumno = (TJSONObject*)dataArray->Items[i];
+
+					String nombre = alumno->GetValue("nombre")->Value();
+					String apellido = alumno->GetValue("apellido")->Value();
+					String dni = alumno->GetValue("dni")->Value();
+
+					// --- CREACIÓN VISUAL DINÁMICA ---
+
+					// A. Crear un Panel contenedor (la "fila")
+					TPanel *fila = new TPanel(ScrollBoxAlumnos);
+					fila->Parent = ScrollBoxAlumnos;
+					fila->Align = alTop;   // Se apilan uno arriba del otro
+					fila->Height = 40;     // Altura de la fila
+					fila->Caption = "";    // Sin texto de fondo
+					fila->BevelOuter = bvNone; // Sin borde 3D para que se vea plano
+					fila->Padding->SetBounds(5, 5, 5, 5); // Margen interno
+
+                    // B. Crear Botón Menos (-)
+					TButton *btnMenos = new TButton(fila);
+					btnMenos->Parent = fila;
+					btnMenos->Caption = "-";
+					btnMenos->Width = 30;
+					btnMenos->Align = alRight; // Pegado a la derecha
+					btnMenos->AlignWithMargins = true; // Para separarlo del otro botón
+                    // btnMenos->Tag = i; // (Opcional) Útil luego para saber a quién borrar
+
+					// C. Crear Botón Más (+)
+					TButton *btnMas = new TButton(fila);
+					btnMas->Parent = fila;
+					btnMas->Caption = "+";
+					btnMas->Width = 30;
+					btnMas->Align = alRight; // Pegado a la derecha (antes del menos)
+
+					// D. Crear Etiqueta con el Nombre
+					TLabel *lblNombre = new TLabel(fila);
+					lblNombre->Parent = fila;
+					lblNombre->Caption = nombre + " " + apellido;
+					lblNombre->Layout = tlCenter; // Centrar texto verticalmente
+					lblNombre->Align = alClient;  // Ocupa todo el espacio restante a la izquierda
+                    lblNombre->Font->Size = 10;   // Un poco más grande
+				}
+			}
+		}
+		__finally
+		{
+			delete jsonRoot;
+		}
+	}
 }
 
 //---------------------------------------------------------------------------

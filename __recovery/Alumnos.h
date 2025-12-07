@@ -25,6 +25,12 @@ __published:	// IDE-managed Components
 private:	// User declarations
 public:		// User declarations
 	__fastcall TAlumnos(TComponent* Owner);
+	void __fastcall ClickMostrarMas(TObject *Sender);
+
+	void __fastcall AgregarBotones(TPanel *header, String id);
+	void __fastcall ClickEditar(TObject *Sender);
+	void __fastcall ClickEliminar(TObject *Sender);
+    void __fastcall CrearCampo(TWinControl *parent, String titulo, String valor);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TAlumnos *Alumnos;
