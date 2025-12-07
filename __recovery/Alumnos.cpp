@@ -65,10 +65,9 @@ void __fastcall TAlumnos::BtnVentanaProductosClick(TObject *Sender)
 //---------------------------------------------------------------------------
 
 
-
 void __fastcall TAlumnos::FormShow(TObject *Sender)
 {
-	// 1. Limpiar lista anterior
+	// 1. Limpiar lista
 	for (int i = ScrollBoxAlumnos->ControlCount - 1; i >= 0; i--) {
 		delete ScrollBoxAlumnos->Controls[i];
 	}
@@ -91,19 +90,17 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 				{
 					TJSONObject* alumno = (TJSONObject*)dataArray->Items[i];
 
-					// --- DATOS ---
+					// DATOS
 					String id = alumno->GetValue("id")->Value();
 					String nombre = alumno->GetValue("nombre")->Value();
 					String apellido = alumno->GetValue("apellido")->Value();
 					String dni = alumno->GetValue("dni")->Value();
 
-					// Contraseña (Validamos si viene en el JSON)
 					String contrasena = "";
 					if (alumno->GetValue("contrasena")) {
 						contrasena = alumno->GetValue("contrasena")->Value();
 					}
 
-					// Limpieza Email
 					String rawEmail = alumno->GetValue("email")->Value();
 					int corte = rawEmail.Pos("\n");
 					if (corte > 0) rawEmail = rawEmail.SubString(1, corte - 1);
@@ -112,7 +109,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					String vencimiento = alumno->GetValue("fecha_vencimiento") ? alumno->GetValue("fecha_vencimiento")->Value() : "-";
 					String rutina = alumno->GetValue("id_rutina") ? alumno->GetValue("id_rutina")->Value() : "0";
 
-					// --- ESTRUCTURA VISUAL ---
+					// VISUAL
 					TPanel *fila = new TPanel(ScrollBoxAlumnos);
 					fila->Parent = ScrollBoxAlumnos;
 					fila->Align = alTop;
@@ -138,8 +135,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					pnlDetalles->Tag = 99;
 					pnlDetalles->Padding->SetBounds(10, 10, 10, 10);
 
-					// --- CREAR CAMPOS (Con Tag ID para identificar) ---
-					// 501:Nombre, 502:Apellido, 503:DNI, 504:Email, 505:Rutina, 506:Vencimiento, 507:Password
+					// CAMPOS
 					CrearCampo(pnlDetalles, "Contraseña", contrasena, 507);
 					CrearCampo(pnlDetalles, "Email", email, 504);
 					CrearCampo(pnlDetalles, "Rutina ID", rutina, 505);
@@ -155,12 +151,11 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					btnAccion->Width = 30;
 					btnAccion->Align = alRight;
 					btnAccion->AlignWithMargins = true;
-					btnAccion->OnClick = ClickMostrarMas;
+					btnAccion->OnClick = ClickMostrarMas; // <--- Nombre correcto
 
-					// Botones Editar/Eliminar
-					AgregarBotones(header, id);
+					// Botones Acción
+					AgregarBotones(header, id); // <--- Nombre correcto
 
-					// Nombre Header
 					TLabel *lblNombre = new TLabel(header);
 					lblNombre->Parent = header;
 					lblNombre->Caption = "  " + nombre + " " + apellido;
@@ -179,7 +174,6 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-// --- FUNCIÓN CREAR CAMPO (CORREGIDA CON int tagId) ---
 void __fastcall TAlumnos::CrearCampo(TWinControl *parent, String titulo, String valor, int tagId)
 {
 	TPanel *pnlCampo = new TPanel(parent);
@@ -193,7 +187,7 @@ void __fastcall TAlumnos::CrearCampo(TWinControl *parent, String titulo, String 
 	TLabel *lbl = new TLabel(pnlCampo);
 	lbl->Parent = pnlCampo;
 	lbl->Align = alLeft;
-	lbl->Width = 80;
+	lbl->Width = 90;
 	lbl->Caption = titulo + ":";
 	lbl->Layout = tlCenter;
 	lbl->Font->Color = clGray;
@@ -203,7 +197,6 @@ void __fastcall TAlumnos::CrearCampo(TWinControl *parent, String titulo, String 
 	edt->Align = alClient;
 	edt->Text = valor;
 
-	// Estado inicial: "Parece un Label"
 	edt->ReadOnly = true;
 	edt->BorderStyle = bsNone;
 	edt->Color = clBtnFace;
@@ -228,17 +221,19 @@ void __fastcall TAlumnos::AgregarBotones(TPanel *header, String id)
 
 	TButton *btnEditar = new TButton(header);
 	btnEditar->Parent = header;
-	btnEditar->Caption = "Edit";
-	btnEditar->Width = 50;
+	btnEditar->Caption = "Editar";
+	btnEditar->Width = 60;
 	btnEditar->Align = alRight;
 	btnEditar->AlignWithMargins = true;
-	btnEditar->OnClick = ClickEditar;
+	btnEditar->OnClick = ClickEditar; // <--- Nombre correcto
 	btnEditar->Hint = id;
 	btnEditar->Visible = false;
 	btnEditar->Tag = 10;
 }
 
-// --- LOGICA DE EDITAR Y GUARDAR ---
+//---------------------------------------------------------------------------
+// LÓGICA DE EDITAR Y GUARDAR
+//---------------------------------------------------------------------------
 void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 {
 	TButton *btn = (TButton*)Sender;
@@ -256,9 +251,9 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 
 	if (!pnlDetalles) return;
 
-	// --- MODO 1: ACTIVAR EDICIÓN ---
-	if (btn->Caption == "Edit")
+	if (btn->Caption == "Editar")
 	{
+		// ACTIVAR EDICIÓN
 		for (int i = 0; i < pnlDetalles->ControlCount; i++)
 		{
 			TControl *hijo = pnlDetalles->Controls[i];
@@ -270,7 +265,7 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 					if (pnlCampo->Controls[j]->InheritsFrom(__classid(TEdit)))
 					{
 						TEdit *edt = (TEdit*)pnlCampo->Controls[j];
-						if (edt->Tag >= 500) // Nuestros campos editables
+						if (edt->Tag >= 500)
 						{
 							edt->ReadOnly = false;
 							edt->BorderStyle = bsSingle;
@@ -282,12 +277,11 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 		}
 		btn->Caption = "Guardar";
 	}
-	// --- MODO 2: GUARDAR CAMBIOS ---
 	else
 	{
+		// GUARDAR CAMBIOS
 		String nombre, apellido, dni, email, contrasena, vencimiento, rutina;
 
-		// 1. Recolectar datos
 		for (int i = 0; i < pnlDetalles->ControlCount; i++)
 		{
 			TControl *hijo = pnlDetalles->Controls[i];
@@ -309,74 +303,32 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 							case 506: vencimiento = edt->Text; break;
 							case 507: contrasena = edt->Text; break;
 						}
-
-						// Bloquear de nuevo
-						edt->ReadOnly = true;
-						edt->BorderStyle = bsNone;
-						edt->Color = clBtnFace;
 					}
 				}
 			}
 		}
 
-		// 2. Enviar a PHP
-		String body = "id=" + alumnoID +
-					  "&nombre=" + nombre +
-					  "&apellido=" + apellido +
-					  "&dni=" + dni +
-					  "&email=" + email +
-					  "&contrasena=" + contrasena +
-					  "&fecha_vencimiento=" + vencimiento +
-					  "&id_rutina=" + rutina;
+		String datosPost = "id=" + alumnoID +
+					       "&nombre=" + nombre +
+					       "&apellido=" + apellido +
+					       "&dni=" + dni +
+					       "&email=" + email +
+					       "&contrasena=" + contrasena +
+					       "&fecha_vencimiento=" + vencimiento +
+					       "&id_rutina=" + rutina;
 
-		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_alumno.php", body);
+		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_alumno.php", datosPost);
+		ShowMessage("Estado: " + respuesta);
 
-		ShowMessage("Respuesta: " + respuesta);
-
-		btn->Caption = "Edit";
+		TimerRecargar->Enabled = true; // Activa el Timer para recargar
 	}
 }
 
-void __fastcall TAlumnos::ClickEliminar(TObject *Sender)
+//---------------------------------------------------------------------------
+// TU FUNCIÓN DE TIMER
+//---------------------------------------------------------------------------
+void __fastcall TAlumnos::AlCompletarGuardado(TObject *Sender)
 {
-	ShowMessage("Click en Eliminar. ID: " + ((TButton*)Sender)->Hint);
-}
-
-void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
-{
-	TButton *btn = (TButton*)Sender;
-	TPanel *header = (TPanel*)btn->Parent;
-	TPanel *fila = (TPanel*)header->Parent;
-
-	TPanel *pnlDetalles = NULL;
-	for (int i = 0; i < fila->ControlCount; i++) {
-		if (fila->Controls[i]->Tag == 99) {
-			pnlDetalles = (TPanel*)fila->Controls[i];
-			break;
-		}
-	}
-
-	bool vamosAAbrir = (fila->Height == 40);
-
-	if (vamosAAbrir)
-	{
-		fila->Height = 250;
-		btn->Caption = "^";
-		if (pnlDetalles) pnlDetalles->Visible = true;
-	}
-	else
-	{
-		if (pnlDetalles) pnlDetalles->Visible = false;
-		fila->Height = 40;
-		btn->Caption = "v";
-	}
-
-	for (int i = 0; i < header->ControlCount; i++)
-	{
-		int tag = header->Controls[i]->Tag;
-		if (tag == 10 || tag == 20)
-		{
-			header->Controls[i]->Visible = vamosAAbrir;
-		}
-	}
+	TimerRecargar->Enabled = false;
+	FormShow(this);
 }

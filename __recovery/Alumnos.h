@@ -30,7 +30,8 @@ public:		// User declarations
 	void __fastcall AgregarBotones(TPanel *header, String id);
 	void __fastcall ClickEditar(TObject *Sender);
 	void __fastcall ClickEliminar(TObject *Sender);
-    void __fastcall CrearCampo(TWinControl *parent, String titulo, String valor);
+	void __fastcall CrearCampo(TWinControl *parent, String titulo, String valor, int tagId);
+	void __fastcall AlCompletarGuardado(TObject *Sender);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TAlumnos *Alumnos;
