@@ -16,3 +16,4 @@ Release/
 *.map
 *.~*
 *.bak
+__recovery/
