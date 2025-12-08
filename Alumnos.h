@@ -27,7 +27,8 @@ public:		// User declarations
 	__fastcall TAlumnos(TComponent* Owner);
 	void __fastcall ClickMostrarMas(TObject *Sender);
 	void __fastcall AgregarClick(TObject *Sender);
-    void __fastcall ClickEditar(TObject *Sender);
+	void __fastcall ClickEditar(TObject *Sender);
+    void __fastcall ClickGuardar(TObject *Sender);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TAlumnos *Alumnos;

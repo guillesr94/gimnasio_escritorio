@@ -66,6 +66,10 @@ void __fastcall TAlumnos::BtnVentanaProductosClick(TObject *Sender)
 
 void __fastcall TAlumnos::FormShow(TObject *Sender)
 {
+	// 0. TRUCO PARA EVITAR EL ERROR "CANNOT FOCUS":
+	// Pasamos el foco al formulario principal antes de borrar los botones.
+	if (this->CanFocus()) this->SetFocus();
+
 	// 1. Limpiar lista anterior
 	for (int i = ScrollBoxAlumnos->ControlCount - 1; i >= 0; i--) {
 		delete ScrollBoxAlumnos->Controls[i];
@@ -87,17 +91,18 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 				{
 					TJSONObject* alumno = (TJSONObject*)dataArray->Items[i];
 
-					// --- EXTRAER DATOS (Limpiamos el email porque viene con basura en tu JSON) ---
+					// --- EXTRAER DATOS ---
+					String id = alumno->GetValue("id")->Value();
 					String nombre = alumno->GetValue("nombre")->Value();
 					String apellido = alumno->GetValue("apellido")->Value();
 					String dni = alumno->GetValue("dni")->Value();
+					String contrasena = alumno->GetValue("contrasena")->Value();
+					String fecha_venc = alumno->GetValue("fecha_vencimiento")->Value();
+					String id_rutina = alumno->GetValue("id_rutina")->Value();
 
-					// El Trim() elimina los espacios y saltos de linea extra del JSON
 					String email = alumno->GetValue("email")->Value().Trim();
-					// Truco extra: si el email tiene saltos de linea internos, cortamos antes
 					int posSalto = email.Pos("\n");
 					if(posSalto > 0) email = email.SubString(1, posSalto - 1);
-
 
 					// --- FILA PRINCIPAL ---
 					TPanel *fila = new TPanel(ScrollBoxAlumnos);
@@ -108,7 +113,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					fila->BevelOuter = bvNone;
 					fila->Padding->SetBounds(5, 0, 5, 2);
 
-					// --- CABECERA (Nombre visible y botones) ---
+					// --- CABECERA ---
 					TPanel *header = new TPanel(fila);
 					header->Parent = fila;
 					header->Align = alTop;
@@ -128,6 +133,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					btnGuardar->Parent = header; btnGuardar->Caption = "Guardar"; btnGuardar->Width = 60;
 					btnGuardar->Align = alRight; btnGuardar->AlignWithMargins = true;
 					btnGuardar->Visible = false; btnGuardar->Tag = 20;
+					btnGuardar->OnClick = ClickGuardar;
 
 					TButton *btnEditar = new TButton(header);
 					btnEditar->Parent = header; btnEditar->Caption = "Editar"; btnEditar->Width = 60;
@@ -135,7 +141,6 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					btnEditar->Visible = false; btnEditar->Tag = 10;
 					btnEditar->OnClick = ClickEditar;
 
-					// Título Principal
 					TLabel *lblTitulo = new TLabel(header);
 					lblTitulo->Parent = header;
 					lblTitulo->Caption = "  " + nombre + " " + apellido;
@@ -156,48 +161,48 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					pnlDetalles->ParentBackground = false;
 					pnlDetalles->Padding->SetBounds(20, 10, 20, 10);
 
-					// FUNCION CREAR CAMPO (Label + Edit)
-					auto CrearCampo = [&](String titulo, String valor) {
-						// 1. EDIT (El valor)
+					// FUNCION CREAR CAMPO
+					auto CrearCampo = [&](String titulo, String valor, int tagID, bool visible) {
 						TEdit *e = new TEdit(pnlDetalles);
 						e->Parent = pnlDetalles;
-						e->Align = alTop;          // Al usar alTop, este se pega arriba del anterior
+						e->Align = alTop;
 						e->Text = valor;
 						e->ReadOnly = true;
 						e->BorderStyle = bsNone;
 						e->Color = clWhite;
-						e->Margins->Bottom = 15;   // Espacio debajo
+						e->Margins->Bottom = 15;
 						e->AlignWithMargins = true;
+						e->Tag = tagID;
 
-						// 2. LABEL (El título)
-						// Lo creamos DESPUES del edit, para que con alTop quede ARRIBA del edit
-						TLabel *l = new TLabel(pnlDetalles);
-						l->Parent = pnlDetalles;
-						l->Align = alTop;
-						l->Caption = titulo;
-						l->Font->Size = 8;
-						l->Font->Color = clGray;
-						l->Margins->Bottom = 2;
-						l->AlignWithMargins = true;
+						// --- CORRECCION CRÍTICA AQUÍ ---
+						e->Visible = visible;
+						if (!visible) {
+							e->TabStop = false; // IMPORTANTE: Si es invisible, que no agarre foco nunca
+						}
+						// ------------------------------
+
+						if(visible) {
+							TLabel *l = new TLabel(pnlDetalles);
+							l->Parent = pnlDetalles;
+							l->Align = alTop;
+							l->Caption = titulo;
+							l->Font->Size = 8;
+							l->Font->Color = clGray;
+							l->Margins->Bottom = 2;
+							l->AlignWithMargins = true;
+						}
 					};
 
-					// ----------------------------------------------------------------
-					// IMPORTANTE: ORDEN INVERSO DE CREACIÓN
-					// Para que visualmente quede: Nombre -> Apellido -> DNI -> Email
-					// Los creamos al revés porque alTop empuja los anteriores hacia abajo.
-					// ----------------------------------------------------------------
+					// --- CREACION (Orden Inverso) ---
+					CrearCampo("Rutina", id_rutina, 8, false);
+					CrearCampo("Fecha", fecha_venc, 7, false);
+					CrearCampo("Pass", contrasena, 6, false);
+					CrearCampo("ID", id, 5, false);
 
-					// 4. El de más abajo visualmente (EMAIL)
-					CrearCampo("Email", email);
-
-					// 3. (DNI)
-					CrearCampo("DNI", dni);
-
-					// 2. (APELLIDO)
-					CrearCampo("Apellido", apellido);
-
-					// 1. El de más arriba visualmente (NOMBRE) - Se crea EL ULTIMO
-					CrearCampo("Nombre", nombre);
+					CrearCampo("Email", email, 4, true);
+					CrearCampo("DNI", dni, 3, true);
+					CrearCampo("Apellido", apellido, 2, true);
+					CrearCampo("Nombre", nombre, 1, true);
 				}
 			}
 		}
@@ -207,6 +212,8 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 		}
 	}
 }
+
+
 
 //---------------------------------------------------------------------------
 // 2. LOGICA DE DESPLEGAR (AUMENTADA LA ALTURA PARA QUE QUEPAN LOS CAMPOS)
@@ -227,9 +234,9 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 
 	if (abrir)
 {
-    fila->Height = 320; // <--- ALTURA SUFICIENTE PARA LOS 4 CAMPOS
-    btn->Caption = "^";
-    if(detalles) detalles->Visible = true;
+	fila->Height = 320; // <--- ALTURA SUFICIENTE PARA LOS 4 CAMPOS
+	btn->Caption = "^";
+	if(detalles) detalles->Visible = true;
 }
 	else
 	{
@@ -255,26 +262,30 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	btn->Visible = false;
+	// 1. Mostrar botón Guardar (pero SIN ocultar el botón Editar)
 	for(int i=0; i<header->ControlCount; i++) {
 		if(header->Controls[i]->Tag == 20) header->Controls[i]->Visible = true;
 	}
 
+	// 2. Buscar el panel de detalles
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
 	}
 
+	// 3. Convertir campos en TextFields editables
 	if(pnlDetalles) {
 		bool primerFoco = true;
 		for(int i=0; i<pnlDetalles->ControlCount; i++) {
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
-			if(ed) {
-				ed->ReadOnly = false;
-				ed->BorderStyle = bsSingle;
-				ed->Color = clWindow;
 
-				// Poner foco en el primer Edit que encontremos (Nombre)
+			// Solo modificamos si es un Edit VISIBLE
+			if(ed && ed->Visible) {
+				ed->ReadOnly = false;       // Permite escribir
+				ed->BorderStyle = bsSingle; // Pone borde de caja
+				ed->Color = clWindow;       // Pone fondo blanco
+
+				// Poner el foco en el primer campo (Nombre)
 				if(primerFoco) {
 					ed->SetFocus();
 					primerFoco = false;
@@ -286,7 +297,65 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 
 
 
+void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
+{
+	TButton *btn = (TButton*)Sender;
+	TPanel *header = (TPanel*)btn->Parent;
+	TPanel *fila = (TPanel*)header->Parent;
 
+	// 1. Buscar el panel de detalles donde están los TextField
+	TPanel *pnlDetalles = NULL;
+	for(int i=0; i<fila->ControlCount; i++) {
+		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
+	}
+
+	if (pnlDetalles)
+	{
+		// Variables para guardar lo que leemos de las cajas de texto
+		String id, nombre, apellido, dni, email, pass, fecha, rutina;
+
+		// 2. Recorremos los controles para leer los datos según su TAG
+		for (int i = 0; i < pnlDetalles->ControlCount; i++)
+		{
+			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
+			if (ed)
+			{
+				switch (ed->Tag) {
+					case 1: nombre = ed->Text; break;
+					case 2: apellido = ed->Text; break;
+					case 3: dni = ed->Text; break;
+					case 4: email = ed->Text; break;
+					case 5: id = ed->Text; break;      // ID oculto
+					case 6: pass = ed->Text; break;    // Pass oculta
+					case 7: fecha = ed->Text; break;   // Fecha oculta
+					case 8: rutina = ed->Text; break;  // Rutina oculta
+				}
+			}
+		}
+
+		// Seguridad: Si no hay ID, no podemos actualizar
+		if (id.IsEmpty()) return;
+
+		// 3. Armamos el paquete de datos para PHP (formato URL)
+		// IMPORTANTE: Los nombres (nombre=, apellido=) deben coincidir con tu PHP $_POST
+		String body = "id=" + id +
+					  "&nombre=" + nombre +
+					  "&apellido=" + apellido +
+					  "&dni=" + dni +
+					  "&email=" + email +
+					  "&contrasena=" + pass +
+					  "&fecha_vencimiento=" + fecha +
+					  "&id_rutina=" + rutina;
+
+		// 4. Enviamos los datos
+		// Asegúrate de que el nombre del archivo PHP sea correcto
+		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_alumno.php", body);
+
+		// 5. Mostrar resultado y refrescar la lista
+		ShowMessage(respuesta);
+		FormShow(this);
+	}
+}
 
 
 //---------------------------------------------------------------------------
