@@ -64,16 +64,12 @@ void __fastcall TAlumnos::BtnVentanaProductosClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-
-
 void __fastcall TAlumnos::FormShow(TObject *Sender)
 {
-	// 1. Limpiar lista
+	// 1. Limpiar lista anterior
 	for (int i = ScrollBoxAlumnos->ControlCount - 1; i >= 0; i--) {
 		delete ScrollBoxAlumnos->Controls[i];
 	}
-
-    // [ELIMINADO BOTON AGREGAR ALUMNO COMO PEDISTE]
 
 	// 2. Pedir datos
 	String json = HttpPost(L"/gimnasio_api/Admin/consultar_lista_alumnos.php", "");
@@ -91,13 +87,19 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 				{
 					TJSONObject* alumno = (TJSONObject*)dataArray->Items[i];
 
-					// DATOS
+					// --- EXTRAER DATOS (Limpiamos el email porque viene con basura en tu JSON) ---
 					String nombre = alumno->GetValue("nombre")->Value();
 					String apellido = alumno->GetValue("apellido")->Value();
 					String dni = alumno->GetValue("dni")->Value();
-					String email = alumno->GetValue("email")->Value().Trim();
 
-					// --- 1. FILA PRINCIPAL ---
+					// El Trim() elimina los espacios y saltos de linea extra del JSON
+					String email = alumno->GetValue("email")->Value().Trim();
+					// Truco extra: si el email tiene saltos de linea internos, cortamos antes
+					int posSalto = email.Pos("\n");
+					if(posSalto > 0) email = email.SubString(1, posSalto - 1);
+
+
+					// --- FILA PRINCIPAL ---
 					TPanel *fila = new TPanel(ScrollBoxAlumnos);
 					fila->Parent = ScrollBoxAlumnos;
 					fila->Align = alTop;
@@ -106,7 +108,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					fila->BevelOuter = bvNone;
 					fila->Padding->SetBounds(5, 0, 5, 2);
 
-					// --- 2. CABECERA ---
+					// --- CABECERA (Nombre visible y botones) ---
 					TPanel *header = new TPanel(fila);
 					header->Parent = fila;
 					header->Align = alTop;
@@ -116,36 +118,24 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					header->Color = clBtnFace;
 					header->ParentBackground = false;
 
-					// BOTÓN FLECHA (A la derecha)
+					// Botones
 					TButton *btnFlecha = new TButton(header);
-					btnFlecha->Parent = header;
-					btnFlecha->Caption = "v";
-					btnFlecha->Width = 30;
-					btnFlecha->Align = alRight;
-					btnFlecha->AlignWithMargins = true;
+					btnFlecha->Parent = header; btnFlecha->Caption = "v"; btnFlecha->Width = 30;
+					btnFlecha->Align = alRight; btnFlecha->AlignWithMargins = true;
 					btnFlecha->OnClick = ClickMostrarMas;
 
-					// BOTÓN GUARDAR (Oculto al inicio - Tag 20)
 					TButton *btnGuardar = new TButton(header);
-					btnGuardar->Parent = header;
-					btnGuardar->Caption = "Guardar";
-					btnGuardar->Width = 60;
-					btnGuardar->Align = alRight;
-					btnGuardar->AlignWithMargins = true;
-					btnGuardar->Visible = false; // OCULTO
-					btnGuardar->Tag = 20;
+					btnGuardar->Parent = header; btnGuardar->Caption = "Guardar"; btnGuardar->Width = 60;
+					btnGuardar->Align = alRight; btnGuardar->AlignWithMargins = true;
+					btnGuardar->Visible = false; btnGuardar->Tag = 20;
 
-					// BOTÓN EDITAR (Oculto al inicio - Tag 10)
 					TButton *btnEditar = new TButton(header);
-					btnEditar->Parent = header;
-					btnEditar->Caption = "Editar";
-					btnEditar->Width = 60;
-					btnEditar->Align = alRight;
-					btnEditar->AlignWithMargins = true;
-					btnEditar->Visible = false; // OCULTO
-					btnEditar->Tag = 10;
+					btnEditar->Parent = header; btnEditar->Caption = "Editar"; btnEditar->Width = 60;
+					btnEditar->Align = alRight; btnEditar->AlignWithMargins = true;
+					btnEditar->Visible = false; btnEditar->Tag = 10;
+					btnEditar->OnClick = ClickEditar;
 
-					// TITULO
+					// Título Principal
 					TLabel *lblTitulo = new TLabel(header);
 					lblTitulo->Parent = header;
 					lblTitulo->Caption = "  " + nombre + " " + apellido;
@@ -154,7 +144,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					lblTitulo->Font->Size = 10;
 					lblTitulo->Font->Style = TFontStyles() << fsBold;
 
-					// --- 3. PANEL DE DETALLES ---
+					// --- PANEL DE DETALLES ---
 					TPanel *pnlDetalles = new TPanel(fila);
 					pnlDetalles->Parent = fila;
 					pnlDetalles->Align = alClient;
@@ -164,23 +154,50 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					pnlDetalles->Tag = 99;
 					pnlDetalles->Color = clWhite;
 					pnlDetalles->ParentBackground = false;
-					pnlDetalles->Padding->SetBounds(20, 10, 10, 10);
+					pnlDetalles->Padding->SetBounds(20, 10, 20, 10);
 
-					// CAMPOS SIMPLES
-					auto CrearLinea = [&](String txt) {
+					// FUNCION CREAR CAMPO (Label + Edit)
+					auto CrearCampo = [&](String titulo, String valor) {
+						// 1. EDIT (El valor)
+						TEdit *e = new TEdit(pnlDetalles);
+						e->Parent = pnlDetalles;
+						e->Align = alTop;          // Al usar alTop, este se pega arriba del anterior
+						e->Text = valor;
+						e->ReadOnly = true;
+						e->BorderStyle = bsNone;
+						e->Color = clWhite;
+						e->Margins->Bottom = 15;   // Espacio debajo
+						e->AlignWithMargins = true;
+
+						// 2. LABEL (El título)
+						// Lo creamos DESPUES del edit, para que con alTop quede ARRIBA del edit
 						TLabel *l = new TLabel(pnlDetalles);
 						l->Parent = pnlDetalles;
 						l->Align = alTop;
-						l->Caption = txt;
+						l->Caption = titulo;
+						l->Font->Size = 8;
 						l->Font->Color = clGray;
-						l->Margins->Bottom = 5;
+						l->Margins->Bottom = 2;
 						l->AlignWithMargins = true;
 					};
 
-					CrearLinea("Email: " + email);
-					CrearLinea("DNI: " + dni);
-					CrearLinea("Apellido: " + apellido);
-					CrearLinea("Nombre: " + nombre);
+					// ----------------------------------------------------------------
+					// IMPORTANTE: ORDEN INVERSO DE CREACIÓN
+					// Para que visualmente quede: Nombre -> Apellido -> DNI -> Email
+					// Los creamos al revés porque alTop empuja los anteriores hacia abajo.
+					// ----------------------------------------------------------------
+
+					// 4. El de más abajo visualmente (EMAIL)
+					CrearCampo("Email", email);
+
+					// 3. (DNI)
+					CrearCampo("DNI", dni);
+
+					// 2. (APELLIDO)
+					CrearCampo("Apellido", apellido);
+
+					// 1. El de más arriba visualmente (NOMBRE) - Se crea EL ULTIMO
+					CrearCampo("Nombre", nombre);
 				}
 			}
 		}
@@ -192,7 +209,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
-// LOGICA DE LA FLECHA: MOSTRAR DETALLES Y BOTONES
+// 2. LOGICA DE DESPLEGAR (AUMENTADA LA ALTURA PARA QUE QUEPAN LOS CAMPOS)
 //---------------------------------------------------------------------------
 void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 {
@@ -200,7 +217,7 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// Buscamos panel detalles
+	// Buscar panel detalles
 	TPanel *detalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) detalles = (TPanel*)fila->Controls[i];
@@ -209,11 +226,11 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 	bool abrir = (fila->Height == 40);
 
 	if (abrir)
-	{
-		fila->Height = 160;
-		btn->Caption = "^";
-		if(detalles) detalles->Visible = true;
-	}
+{
+    fila->Height = 320; // <--- ALTURA SUFICIENTE PARA LOS 4 CAMPOS
+    btn->Caption = "^";
+    if(detalles) detalles->Visible = true;
+}
 	else
 	{
 		if(detalles) detalles->Visible = false;
@@ -221,7 +238,7 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 		btn->Caption = "v";
 	}
 
-	// MOSTRAR/OCULTAR LOS BOTONES EDITAR(10) Y GUARDAR(20)
+	// Gestionar visibilidad de botones Editar/Guardar
 	for(int i=0; i<header->ControlCount; i++) {
 		int t = header->Controls[i]->Tag;
 		if(t == 10 || t == 20) {
@@ -229,6 +246,48 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 		}
 	}
 }
+//---------------------------------------------------------------------------
+// 3. LOGICA BOTON EDITAR (SIN CAMBIOS, SOLO PARA REFERENCIA)
+//---------------------------------------------------------------------------
+void __fastcall TAlumnos::ClickEditar(TObject *Sender)
+{
+	TButton *btn = (TButton*)Sender;
+	TPanel *header = (TPanel*)btn->Parent;
+	TPanel *fila = (TPanel*)header->Parent;
+
+	btn->Visible = false;
+	for(int i=0; i<header->ControlCount; i++) {
+		if(header->Controls[i]->Tag == 20) header->Controls[i]->Visible = true;
+	}
+
+	TPanel *pnlDetalles = NULL;
+	for(int i=0; i<fila->ControlCount; i++) {
+		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
+	}
+
+	if(pnlDetalles) {
+		bool primerFoco = true;
+		for(int i=0; i<pnlDetalles->ControlCount; i++) {
+			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
+			if(ed) {
+				ed->ReadOnly = false;
+				ed->BorderStyle = bsSingle;
+				ed->Color = clWindow;
+
+				// Poner foco en el primer Edit que encontremos (Nombre)
+				if(primerFoco) {
+					ed->SetFocus();
+					primerFoco = false;
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
 
 //---------------------------------------------------------------------------
 // VENTANA AGREGAR
