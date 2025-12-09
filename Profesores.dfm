@@ -62,4 +62,12 @@ object Profesores: TProfesores
     Height = 193
     TabOrder = 4
   end
+  object AgregarProfesor: TButton
+    Left = 32
+    Top = 77
+    Width = 75
+    Height = 25
+    Caption = 'Agregar'
+    TabOrder = 5
+  end
 end

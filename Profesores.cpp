@@ -367,3 +367,4 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 {
 	ShowMessage("Funcionalidad: Aquí se eliminaría al profesor.");
 }
+

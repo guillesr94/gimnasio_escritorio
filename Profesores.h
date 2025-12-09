@@ -17,6 +17,7 @@ __published:	// IDE-managed Components
 	TButton *BtnVentanaVentas;
 	TButton *BtnVentanaProductos;
 	TScrollBox *ScrollBoxProfesores;
+	TButton *AgregarProfesor;
 	void __fastcall BtnVentanaProfesoresClick(TObject *Sender);
 	void __fastcall BtnVentanaCLientesClick(TObject *Sender);
 	void __fastcall BtnVentanaVentasClick(TObject *Sender);
