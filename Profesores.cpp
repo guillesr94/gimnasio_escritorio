@@ -296,8 +296,72 @@ void __fastcall TProfesores::ClickEditar(TObject *Sender)
 
 void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 {
-	ShowMessage("Funcionalidad: Aquí se guardarían los cambios.");
+	TButton *btn = (TButton*)Sender;
+	TPanel *header = (TPanel*)btn->Parent;
+	TPanel *fila = (TPanel*)header->Parent;
+
+	// 1. Buscar el panel de detalles
+	TPanel *pnlDetalles = NULL;
+	for(int i=0; i<fila->ControlCount; i++) {
+		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
+	}
+
+	if (pnlDetalles)
+	{
+		// Variables exclusivas de Profesores (Sin fecha ni rutina)
+		String id, nombre, apellido, dni, email, contrasena;
+
+		// 2. Leer datos y BLOQUEAR LOS CAMPOS (Efecto visual de guardado)
+		for (int i = 0; i < pnlDetalles->ControlCount; i++)
+		{
+			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
+			if (ed)
+			{
+				// Leemos el valor según los Tags que pusimos en FormShow
+				switch (ed->Tag) {
+					case 1: nombre = ed->Text; break;
+					case 2: apellido = ed->Text; break;
+					case 3: dni = ed->Text; break;
+					case 4: email = ed->Text; break;
+					case 5: id = ed->Text; break;
+					case 6: contrasena = ed->Text; break;
+				}
+
+				// --- TRUCO VISUAL (Igual que en Alumnos) ---
+				// Volvemos a poner los campos "lindos" (sin bordes y bloqueados)
+				if(ed->Visible) {
+					ed->ReadOnly = true;         // Bloqueamos escritura
+					ed->BorderStyle = bsNone;    // Quitamos borde
+					ed->Color = clWhite;         // Fondo blanco limpio
+				}
+			}
+		}
+
+		if (id.IsEmpty()) return;
+
+		// 3. Enviar al servidor (Adaptado a tu PHP de Profesores)
+		String body = "id=" + id +
+					  "&nombre=" + nombre +
+					  "&apellido=" + apellido +
+					  "&dni=" + dni +
+					  "&email=" + email +
+					  "&contrasena=" + contrasena;
+
+		// Llamada al script que ya probaste en Postman
+		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_profesor.php", body);
+		ShowMessage(respuesta);
+
+		// 4. ACTUALIZAR EL TITULO DEL PROFESOR (Por si cambiaste el nombre)
+		for(int i=0; i<header->ControlCount; i++) {
+			TLabel *lbl = dynamic_cast<TLabel*>(header->Controls[i]);
+			if(lbl) {
+				lbl->Caption = "  " + nombre + " " + apellido;
+			}
+		}
+	}
 }
+
+
 
 void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 {
