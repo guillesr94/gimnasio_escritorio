@@ -141,6 +141,17 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					btnEditar->Visible = false; btnEditar->Tag = 10;
 					btnEditar->OnClick = ClickEditar;
 
+					TButton *btnEliminar = new TButton(header);
+                    btnEliminar->Parent = header;
+                    btnEliminar->Caption = "Eliminar"; // Texto del botón
+					btnEliminar->Width = 60;
+                    btnEliminar->Align = alRight;      // Se alineará a la izquierda de 'Editar'
+					btnEliminar->AlignWithMargins = true;
+					btnEliminar->Visible = false;      // Oculto al inicio igual que los otros
+					btnEliminar->Tag = 30;
+					btnEliminar->OnClick = ClickEliminar;
+
+
 					TLabel *lblTitulo = new TLabel(header);
 					lblTitulo->Parent = header;
 					lblTitulo->Caption = "  " + nombre + " " + apellido;
@@ -233,11 +244,11 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 	bool abrir = (fila->Height == 40);
 
 	if (abrir)
-{
-	fila->Height = 320; // <--- ALTURA SUFICIENTE PARA LOS 4 CAMPOS
-	btn->Caption = "^";
-	if(detalles) detalles->Visible = true;
-}
+	{
+		fila->Height = 320;
+		btn->Caption = "^";
+		if(detalles) detalles->Visible = true;
+	}
 	else
 	{
 		if(detalles) detalles->Visible = false;
@@ -245,10 +256,14 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 		btn->Caption = "v";
 	}
 
-	// Gestionar visibilidad de botones Editar/Guardar
+	// ---------------------------------------------------------
+	// LOGICA DE VISIBILIDAD DE BOTONES
+	// ---------------------------------------------------------
 	for(int i=0; i<header->ControlCount; i++) {
 		int t = header->Controls[i]->Tag;
-		if(t == 10 || t == 20) {
+
+		// Si es Editar(10), Guardar(20) o Eliminar(30)
+		if(t == 10 || t == 20 || t == 30) {
 			header->Controls[i]->Visible = abrir;
 		}
 	}
@@ -296,14 +311,13 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 }
 
 
-
 void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 {
 	TButton *btn = (TButton*)Sender;
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// 1. Buscar el panel de detalles donde están los TextField
+	// 1. Buscar el panel de detalles
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
@@ -311,52 +325,58 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 
 	if (pnlDetalles)
 	{
-		// Variables para guardar lo que leemos de las cajas de texto
 		String id, nombre, apellido, dni, email, pass, fecha, rutina;
 
-		// 2. Recorremos los controles para leer los datos según su TAG
+		// 2. Leer datos y BLOQUEAR LOS CAMPOS (Para simular que se guardó)
 		for (int i = 0; i < pnlDetalles->ControlCount; i++)
 		{
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 			if (ed)
 			{
+				// Leemos el valor
 				switch (ed->Tag) {
 					case 1: nombre = ed->Text; break;
 					case 2: apellido = ed->Text; break;
 					case 3: dni = ed->Text; break;
 					case 4: email = ed->Text; break;
-					case 5: id = ed->Text; break;      // ID oculto
-					case 6: pass = ed->Text; break;    // Pass oculta
-					case 7: fecha = ed->Text; break;   // Fecha oculta
-					case 8: rutina = ed->Text; break;  // Rutina oculta
+					case 5: id = ed->Text; break;
+					case 6: pass = ed->Text; break;
+					case 7: fecha = ed->Text; break;
+					case 8: rutina = ed->Text; break;
+				}
+
+				// --- AQUÍ ESTA EL TRUCO PARA QUE NO DE ERROR ---
+				// En lugar de recargar todo, solo volvemos a poner los campos en modo lectura
+				if(ed->Visible) {
+					ed->ReadOnly = true;         // Bloqueamos escritura
+					ed->BorderStyle = bsNone;    // Quitamos borde
+					ed->Color = clWhite;         // Fondo blanco limpio
 				}
 			}
 		}
 
-		// Seguridad: Si no hay ID, no podemos actualizar
 		if (id.IsEmpty()) return;
 
-		// 3. Armamos el paquete de datos para PHP (formato URL)
-		// IMPORTANTE: Los nombres (nombre=, apellido=) deben coincidir con tu PHP $_POST
-		String body = "id=" + id +
-					  "&nombre=" + nombre +
-					  "&apellido=" + apellido +
-					  "&dni=" + dni +
-					  "&email=" + email +
-					  "&contrasena=" + pass +
-					  "&fecha_vencimiento=" + fecha +
-					  "&id_rutina=" + rutina;
+		// 3. Enviar al servidor
+		String body = "id=" + id + "&nombre=" + nombre + "&apellido=" + apellido +
+					  "&dni=" + dni + "&email=" + email + "&contrasena=" + pass +
+					  "&fecha_vencimiento=" + fecha + "&id_rutina=" + rutina;
 
-		// 4. Enviamos los datos
-		// Asegúrate de que el nombre del archivo PHP sea correcto
 		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_alumno.php", body);
-
-		// 5. Mostrar resultado y refrescar la lista
 		ShowMessage(respuesta);
-		FormShow(this);
+
+		// 4. ACTUALIZAR EL TITULO DEL ALUMNO (Por si cambiaste el nombre)
+		for(int i=0; i<header->ControlCount; i++) {
+			TLabel *lbl = dynamic_cast<TLabel*>(header->Controls[i]);
+			if(lbl) {
+				lbl->Caption = "  " + nombre + " " + apellido;
+			}
+		}
+
+		// 5. IMPORTANTE: ¡ELIMINA LA LLAMADA A FormShow!
+		// FormShow(this);  <--- ESTO ERA LO QUE CAUSABA EL ERROR
 	}
 }
-
 
 void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 {
@@ -460,4 +480,68 @@ if (ventana->ShowModal() == mrOk)
 		}
 	}
 	delete ventana;
+}
+
+
+
+void __fastcall TAlumnos::ClickEliminar(TObject *Sender)
+{
+	TButton *btn = (TButton*)Sender;
+	TPanel *header = (TPanel*)btn->Parent;
+	TPanel *fila = (TPanel*)header->Parent; // Esta es la fila completa
+
+	// 1. Buscamos el panel de detalles oculto
+	TPanel *pnlDetalles = NULL;
+	for(int i=0; i<fila->ControlCount; i++) {
+		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
+	}
+
+	if(pnlDetalles) {
+		String id = "";
+		String nombre = "";
+		String apellido = "";
+
+		// 2. Extraemos ID, Nombre y Apellido
+		for(int i=0; i<pnlDetalles->ControlCount; i++) {
+			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
+			if(ed) {
+				if (ed->Tag == 1) nombre = ed->Text;
+				if (ed->Tag == 2) apellido = ed->Text;
+				if (ed->Tag == 5) id = ed->Text.Trim();
+			}
+		}
+
+		if(id.IsEmpty()) return;
+
+		// 3. Confirmación
+		String mensaje = "¿Seguro que quieres eliminar al alumno: " + nombre + " " + apellido + "?";
+
+		if(MessageDlg(mensaje, mtConfirmation, TMsgDlgButtons() << mbYes << mbNo, 0) == mrYes)
+		{
+			// A) Preparamos los datos
+			String body = "id=" + id;
+
+			// B) Enviamos la petición de borrado
+			String respuesta = HttpPost(L"/gimnasio_api/Admin/eliminar_alumno.php", body);
+
+			// C) Verificamos respuesta
+			if (respuesta.Pos("success") > 0)
+			{
+				ShowMessage("Alumno eliminado correctamente.");
+
+				// --- CORRECCIÓN CRÍTICA ---
+				// NO llamamos a FormShow(this) porque eso destruye el botón mientras lo usas.
+				// En su lugar, simplemente ocultamos la fila visualmente.
+
+				fila->Visible = false; // Lo hacemos invisible
+				fila->Parent = NULL;   // Lo sacamos de la lista para que las otras filas suban
+
+				// Al cerrar la ventana, la memoria se limpiará sola.
+			}
+			else
+			{
+				ShowMessage("Error del servidor: " + respuesta);
+			}
+		}
+	}
 }
