@@ -363,8 +363,62 @@ void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 
 
 
+
 void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 {
-	ShowMessage("Funcionalidad: Aquí se eliminaría al profesor.");
-}
+	TButton *btn = (TButton*)Sender;
+	TPanel *header = (TPanel*)btn->Parent;
+	TPanel *fila = (TPanel*)header->Parent; // Obtenemos la fila completa
 
+	// 1. Buscamos el panel de detalles oculto (donde guardamos los datos)
+	TPanel *pnlDetalles = NULL;
+	for(int i=0; i<fila->ControlCount; i++) {
+		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
+	}
+
+	if(pnlDetalles) {
+		String id = "";
+		String nombre = "";
+		String apellido = "";
+
+		// 2. Extraemos ID (Tag 5), Nombre (Tag 1) y Apellido (Tag 2)
+		// Asumimos que en el FormShow de Profesores usaste los mismos Tags que en Alumnos
+		for(int i=0; i<pnlDetalles->ControlCount; i++) {
+			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
+			if(ed) {
+				if (ed->Tag == 1) nombre = ed->Text;
+				if (ed->Tag == 2) apellido = ed->Text;
+				if (ed->Tag == 5) id = ed->Text.Trim(); // Trim limpia espacios vacíos
+			}
+		}
+
+		if(id.IsEmpty()) return;
+
+		// 3. Confirmación
+		String mensaje = "¿Seguro que quieres eliminar al profesor: " + nombre + " " + apellido + "?";
+
+		if(MessageDlg(mensaje, mtConfirmation, TMsgDlgButtons() << mbYes << mbNo, 0) == mrYes)
+		{
+			// A) Preparamos los datos
+			String body = "id=" + id;
+
+			// B) Enviamos la petición al PHP de PROFESORES
+			String respuesta = HttpPost(L"/gimnasio_api/Admin/eliminar_profesor.php", body);
+
+			// C) Verificamos respuesta
+			if (respuesta.Pos("success") > 0)
+			{
+				ShowMessage("Profesor eliminado correctamente.");
+
+				// --- EVITAMOS EL ERROR "ACCESS VIOLATION" ---
+				// En lugar de recargar toda la ventana (FormShow), solo ocultamos esta fila.
+				fila->Visible = false;
+				fila->Parent = NULL;
+			}
+			else
+			{
+				ShowMessage("Error del servidor: " + respuesta);
+			}
+		}
+	}
+}
