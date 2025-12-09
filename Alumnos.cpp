@@ -143,7 +143,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 
 					TButton *btnEliminar = new TButton(header);
                     btnEliminar->Parent = header;
-                    btnEliminar->Caption = "Eliminar"; // Texto del botón
+					btnEliminar->Caption = "Eliminar"; // Texto del botón
 					btnEliminar->Width = 60;
                     btnEliminar->Align = alRight;      // Se alineará a la izquierda de 'Editar'
 					btnEliminar->AlignWithMargins = true;

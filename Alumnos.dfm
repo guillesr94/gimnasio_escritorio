@@ -58,7 +58,7 @@ object Alumnos: TAlumnos
   object ScrollBoxAlumnos: TScrollBox
     Left = 32
     Top = 144
-    Width = 505
+    Width = 537
     Height = 265
     TabOrder = 4
   end

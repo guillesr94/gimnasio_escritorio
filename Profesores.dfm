@@ -10,10 +10,11 @@ object Profesores: TProfesores
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
+  OnShow = FormShow
   TextHeight = 15
   object Label1: TLabel
-    Left = 128
-    Top = 88
+    Left = 32
+    Top = 56
     Width = 55
     Height = 15
     Caption = 'Profesores'
@@ -53,5 +54,12 @@ object Profesores: TProfesores
     Caption = 'Productos'
     TabOrder = 3
     OnClick = BtnVentanaProductosClick
+  end
+  object ScrollBoxProfesores: TScrollBox
+    Left = 128
+    Top = 176
+    Width = 387
+    Height = 193
+    TabOrder = 4
   end
 end
