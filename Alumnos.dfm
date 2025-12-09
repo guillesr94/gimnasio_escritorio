@@ -62,4 +62,13 @@ object Alumnos: TAlumnos
     Height = 265
     TabOrder = 4
   end
+  object AgregarAlumno: TButton
+    Left = 32
+    Top = 88
+    Width = 75
+    Height = 25
+    Caption = 'Agregar'
+    TabOrder = 5
+    OnClick = AgregarAlumnoClick
+  end
 end

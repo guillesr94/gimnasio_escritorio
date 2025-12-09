@@ -358,30 +358,106 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 }
 
 
-//---------------------------------------------------------------------------
-// VENTANA AGREGAR
-//---------------------------------------------------------------------------
-void __fastcall TAlumnos::AgregarClick(TObject *Sender)
+void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 {
-	TForm *v = new TForm(this);
-	v->Caption = "Ingresa los datos";
-	v->Width = 300; v->Height = 350;
-	v->Position = poMainFormCenter; v->BorderStyle = bsDialog;
+	// 1. Crear la ventana
+	TForm *ventana = new TForm(this);
+	ventana->Caption = "Nuevo Alumno";
+	ventana->Width = 350;
+	ventana->Height = 450;
+	ventana->Position = poMainFormCenter;
+	ventana->BorderStyle = bsDialog;
 
-	TEdit *eN = new TEdit(v); eN->Parent=v; eN->Align=alTop; eN->TextHint="Nombre"; eN->Margins->Bottom=5; eN->AlignWithMargins=true;
-	TEdit *eA = new TEdit(v); eA->Parent=v; eA->Align=alTop; eA->TextHint="Apellido"; eA->Margins->Bottom=5; eA->AlignWithMargins=true;
-	TEdit *eD = new TEdit(v); eD->Parent=v; eD->Align=alTop; eD->TextHint="DNI"; eD->Margins->Bottom=5; eD->AlignWithMargins=true;
-	TEdit *eM = new TEdit(v); eM->Parent=v; eM->Align=alTop; eM->TextHint="Email"; eM->Margins->Bottom=5; eM->AlignWithMargins=true;
-	TEdit *eP = new TEdit(v); eP->Parent=v; eP->Align=alTop; eP->TextHint="Contraseña"; eP->Margins->Bottom=5; eP->AlignWithMargins=true;
+	// -----------------------------------------------------------
+	// AQUI ESTA EL ORDEN LOGICO (DE ARRIBA HACIA ABAJO)
+	// Usamos 'Top' para decir exactamente a qué altura va cada uno
+	// -----------------------------------------------------------
 
-	TButton *bG = new TButton(v); bG->Parent = v; bG->Caption = "Guardar"; bG->Align = alBottom; bG->ModalResult = mrOk;
+	// 1. NOMBRE (Arriba)
+	TEdit *eNombre = new TEdit(ventana);
+	eNombre->Parent = ventana;
+	eNombre->Left = 40;        // Margen izquierdo
+	eNombre->Top = 30;         // Altura (Arriba)
+	eNombre->Width = 250;      // Ancho
+	eNombre->TextHint = "Nombre";
 
-	if (v->ShowModal() == mrOk)
+	// 2. APELLIDO (Más abajo)
+	TEdit *eApellido = new TEdit(ventana);
+	eApellido->Parent = ventana;
+	eApellido->Left = 40;
+	eApellido->Top = 80;       // 50 pixeles más abajo
+	eApellido->Width = 250;
+	eApellido->TextHint = "Apellido";
+
+	// 3. DNI
+	TEdit *eDNI = new TEdit(ventana);
+	eDNI->Parent = ventana;
+	eDNI->Left = 40;
+	eDNI->Top = 130;
+	eDNI->Width = 250;
+	eDNI->TextHint = "DNI";
+
+	// 4. EMAIL
+	TEdit *eEmail = new TEdit(ventana);
+	eEmail->Parent = ventana;
+	eEmail->Left = 40;
+	eEmail->Top = 180;
+	eEmail->Width = 250;
+	eEmail->TextHint = "Email";
+
+	// 5. CONTRASEÑA
+	TEdit *ePass = new TEdit(ventana);
+	ePass->Parent = ventana;
+	ePass->Left = 40;
+	ePass->Top = 230;
+	ePass->Width = 250;
+	ePass->TextHint = "Contraseña";
+
+	// 6. BOTON GUARDAR
+	TButton *btnGuardar = new TButton(ventana);
+	btnGuardar->Parent = ventana;
+	btnGuardar->Left = 40;
+	btnGuardar->Top = 300;     // Abajo del todo
+	btnGuardar->Width = 250;
+	btnGuardar->Height = 45;
+	btnGuardar->Caption = "GUARDAR ALUMNO";
+	btnGuardar->ModalResult = mrOk;
+
+
+if (ventana->ShowModal() == mrOk)
 	{
-		String body = "nombre=" + eN->Text + "&apellido=" + eA->Text + "&dni=" + eD->Text + "&email=" + eM->Text + "&contrasena=" + eP->Text;
-		String resp = HttpPost(L"/gimnasio_api/Admin/guardar_nuevo_alumno.php", body);
-		ShowMessage(resp);
-		FormShow(this);
+		// Validamos datos obligatorios
+		if(eNombre->Text.IsEmpty() || eApellido->Text.IsEmpty() || eDNI->Text.IsEmpty()) {
+			ShowMessage("Faltan datos obligatorios (Nombre, Apellido, DNI).");
+		}
+		else
+		{
+			// Preparamos los datos
+			String body = "nombre=" + eNombre->Text +
+						  "&apellido=" + eApellido->Text +
+						  "&dni=" + eDNI->Text +
+						  "&email=" + eEmail->Text +
+						  "&contrasena=" + ePass->Text;
+
+			// *** CAMBIO CLAVE: Usamos el archivo correcto "crear_alumno.php" ***
+			String resp = HttpPost(L"/gimnasio_api/Admin/crear_alumno.php", body);
+
+		if (resp.Pos("Duplicate") > 0 && resp.Pos("dni") > 0)
+			{
+				ShowMessage("Error: Pusiste el mismo DNI que otro cliente.");
+			}
+			// 2. Si salió todo bien ("success")
+			else if (resp.Pos("success") > 0)
+			{
+				ShowMessage("Alumno creado correctamente.");
+				FormShow(this); // Recargar lista solo si se creó bien
+			}
+			// 3. Cualquier otro error raro
+			else
+			{
+				ShowMessage("Hubo un error: " + resp);
+			}
+		}
 	}
-	delete v;
+	delete ventana;
 }

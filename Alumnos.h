@@ -17,18 +17,20 @@ __published:	// IDE-managed Components
 	TButton *BtnVentanaVentas;
 	TButton *BtnVentanaProductos;
 	TScrollBox *ScrollBoxAlumnos;
+	TButton *AgregarAlumno;
 	void __fastcall BtnVentanaProfesoresClick(TObject *Sender);
 	void __fastcall BtnVentanaCLientesClick(TObject *Sender);
 	void __fastcall BtnVentanaVentasClick(TObject *Sender);
 	void __fastcall BtnVentanaProductosClick(TObject *Sender);
 	void __fastcall FormShow(TObject *Sender);
+	void __fastcall AgregarAlumnoClick(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TAlumnos(TComponent* Owner);
 	void __fastcall ClickMostrarMas(TObject *Sender);
-	void __fastcall AgregarClick(TObject *Sender);
+//	void __fastcall AgregarClick(TObject *Sender);
 	void __fastcall ClickEditar(TObject *Sender);
-    void __fastcall ClickGuardar(TObject *Sender);
+	void __fastcall ClickGuardar(TObject *Sender);
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TAlumnos *Alumnos;
