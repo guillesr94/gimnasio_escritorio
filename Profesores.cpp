@@ -146,6 +146,16 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 					btnEliminar->Tag = 30;
 					btnEliminar->OnClick = ClickEliminar;
 
+                    TButton *btnAgAlumno = new TButton(header);
+					btnAgAlumno->Parent = header;
+					btnAgAlumno->Caption = "Agregar Alumno";
+					btnAgAlumno->Width = 100;
+					btnAgAlumno->Align = alRight;
+					btnAgAlumno->AlignWithMargins = true;
+					btnAgAlumno->Visible = false;
+					btnAgAlumno->Tag = 40;
+					btnAgAlumno->OnClick = ClickAgregarAlumnoAProfesor;
+
 					TLabel *lblTitulo = new TLabel(header);
 					lblTitulo->Parent = header;
 					lblTitulo->Caption = "  " + nombre + " " + apellido;
@@ -239,10 +249,10 @@ void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 		btn->Caption = "v";
 	}
 
-	// Mostrar/Ocultar los botones segun Tags
+	// Mostramos o ocultamos los botones.Si agregamos solo agregamos t == numero asignado
 	for(int i=0; i<header->ControlCount; i++) {
 		int t = header->Controls[i]->Tag;
-		if(t == 10 || t == 20 || t == 30) {
+		if(t == 10 || t == 20 || t == 30 || t == 40) {
 			header->Controls[i]->Visible = abrir;
 		}
 	}
@@ -422,3 +432,103 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 		}
 	}
 }
+
+
+
+
+void __fastcall TProfesores::ClickAgregarAlumnoAProfesor(TObject *Sender)
+{
+	ShowMessage("agregamos un alumno al profesor");
+}
+
+
+void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
+{
+  {
+	// 1. Crear la ventana modal dinámicamente
+	TForm *ventana = new TForm(this);
+	ventana->Caption = "Nuevo Profesor"; // Cambiado título
+	ventana->Width = 350;
+	ventana->Height = 450;
+	ventana->Position = poMainFormCenter;
+	ventana->BorderStyle = bsDialog;
+
+	// --- CAMPOS DE TEXTO ---
+
+	// 1. NOMBRE
+	TEdit *eNombre = new TEdit(ventana);
+	eNombre->Parent = ventana;
+	eNombre->Left = 40; eNombre->Top = 30; eNombre->Width = 250;
+	eNombre->TextHint = "Nombre";
+
+	// 2. APELLIDO
+	TEdit *eApellido = new TEdit(ventana);
+	eApellido->Parent = ventana;
+	eApellido->Left = 40; eApellido->Top = 80; eApellido->Width = 250;
+	eApellido->TextHint = "Apellido";
+
+	// 3. DNI
+	TEdit *eDNI = new TEdit(ventana);
+	eDNI->Parent = ventana;
+	eDNI->Left = 40; eDNI->Top = 130; eDNI->Width = 250;
+	eDNI->TextHint = "DNI";
+
+	// 4. EMAIL
+	TEdit *eEmail = new TEdit(ventana);
+	eEmail->Parent = ventana;
+	eEmail->Left = 40; eEmail->Top = 180; eEmail->Width = 250;
+	eEmail->TextHint = "Email";
+
+	// 5. CONTRASEÑA
+	TEdit *ePass = new TEdit(ventana);
+	ePass->Parent = ventana;
+	ePass->Left = 40; ePass->Top = 230; ePass->Width = 250;
+	ePass->TextHint = "Contraseña";
+
+	// 6. BOTON GUARDAR
+	TButton *btnGuardar = new TButton(ventana);
+	btnGuardar->Parent = ventana;
+	btnGuardar->Left = 40; btnGuardar->Top = 300;
+	btnGuardar->Width = 250; btnGuardar->Height = 45;
+	btnGuardar->Caption = "GUARDAR PROFESOR"; // Cambiado texto botón
+	btnGuardar->ModalResult = mrOk;
+
+	// --- MOSTRAR VENTANA Y PROCESAR ---
+	if (ventana->ShowModal() == mrOk)
+	{
+		// Validamos datos obligatorios
+		if(eNombre->Text.IsEmpty() || eApellido->Text.IsEmpty() || eDNI->Text.IsEmpty()) {
+			ShowMessage("Faltan datos obligatorios (Nombre, Apellido, DNI).");
+		}
+		else
+		{
+			// Preparamos los datos
+			String body = "nombre=" + eNombre->Text +
+						  "&apellido=" + eApellido->Text +
+						  "&dni=" + eDNI->Text +
+						  "&email=" + eEmail->Text +
+						  "&contrasena=" + ePass->Text;
+
+			// *** CAMBIO IMPORTANTE: Apuntamos al PHP de PROFESORES ***
+			String resp = HttpPost(L"/gimnasio_api/Admin/crear_profesor.php", body);
+
+			if (resp.Pos("Duplicate") > 0 && resp.Pos("dni") > 0)
+			{
+				ShowMessage("Error: Ya existe un profesor con ese DNI.");
+			}
+			else if (resp.Pos("success") > 0)
+			{
+				ShowMessage("Profesor creado correctamente.");
+				FormShow(this); // Recargar la lista de profesores
+			}
+			else
+			{
+				ShowMessage("Hubo un error: " + resp);
+			}
+		}
+	}
+	delete ventana;
+}
+}
+//---------------------------------------------------------------------------
+

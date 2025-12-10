@@ -377,7 +377,6 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 		// FormShow(this);  <--- ESTO ERA LO QUE CAUSABA EL ERROR
 	}
 }
-
 void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 {
 	// 1. Crear la ventana
@@ -388,93 +387,121 @@ void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 	ventana->Position = poMainFormCenter;
 	ventana->BorderStyle = bsDialog;
 
-	// -----------------------------------------------------------
-	// AQUI ESTA EL ORDEN LOGICO (DE ARRIBA HACIA ABAJO)
-	// Usamos 'Top' para decir exactamente a qué altura va cada uno
-	// -----------------------------------------------------------
+	// --- CAMPOS DE TEXTO ---
 
-	// 1. NOMBRE (Arriba)
+	// 1. NOMBRE
 	TEdit *eNombre = new TEdit(ventana);
 	eNombre->Parent = ventana;
-	eNombre->Left = 40;        // Margen izquierdo
-	eNombre->Top = 30;         // Altura (Arriba)
-	eNombre->Width = 250;      // Ancho
-	eNombre->TextHint = "Nombre";
+	eNombre->Left = 40; eNombre->Top = 30; eNombre->Width = 250; eNombre->TextHint = "Nombre";
 
-	// 2. APELLIDO (Más abajo)
+	// 2. APELLIDO
 	TEdit *eApellido = new TEdit(ventana);
 	eApellido->Parent = ventana;
-	eApellido->Left = 40;
-	eApellido->Top = 80;       // 50 pixeles más abajo
-	eApellido->Width = 250;
-	eApellido->TextHint = "Apellido";
+	eApellido->Left = 40; eApellido->Top = 80; eApellido->Width = 250; eApellido->TextHint = "Apellido";
 
 	// 3. DNI
 	TEdit *eDNI = new TEdit(ventana);
 	eDNI->Parent = ventana;
-	eDNI->Left = 40;
-	eDNI->Top = 130;
-	eDNI->Width = 250;
-	eDNI->TextHint = "DNI";
+	eDNI->Left = 40; eDNI->Top = 130; eDNI->Width = 250; eDNI->TextHint = "DNI";
 
 	// 4. EMAIL
 	TEdit *eEmail = new TEdit(ventana);
 	eEmail->Parent = ventana;
-	eEmail->Left = 40;
-	eEmail->Top = 180;
-	eEmail->Width = 250;
-	eEmail->TextHint = "Email";
+	eEmail->Left = 40; eEmail->Top = 180; eEmail->Width = 250; eEmail->TextHint = "Email";
 
 	// 5. CONTRASEÑA
 	TEdit *ePass = new TEdit(ventana);
 	ePass->Parent = ventana;
-	ePass->Left = 40;
-	ePass->Top = 230;
-	ePass->Width = 250;
-	ePass->TextHint = "Contraseña";
+	ePass->Left = 40; ePass->Top = 230; ePass->Width = 250; ePass->TextHint = "Contraseña";
 
-	// 6. BOTON GUARDAR
+	// 6. COMBOBOX PROFESORES
+	TComboBox *cbProfes = new TComboBox(ventana);
+	cbProfes->Parent = ventana;
+	cbProfes->Left = 40;
+	cbProfes->Top = 280; // Posición correcta
+	cbProfes->Width = 250;
+	cbProfes->TextHint = "Seleccionar Profesor";
+	cbProfes->Style = csDropDownList;
+
+	// --- CARGAR PROFESORES (Lógica Corregida) ---
+	try {
+		String jsonProfes = HttpPost(L"/gimnasio_api/Admin/consultar_lista_profesores.php", "");
+		TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(jsonProfes);
+
+		if (jsonRoot) {
+			TJSONArray* data = (TJSONArray*)jsonRoot->GetValue("data");
+			if (data && !data->Null) {
+				cbProfes->Items->Clear();
+
+				for(int i = 0; i < data->Count; i++) {
+					TJSONObject* profe = (TJSONObject*)data->Items[i];
+
+					String nom = profe->GetValue("nombre")->Value();
+					String ape = profe->GetValue("apellido")->Value();
+
+					// CORRECCION 1: Convertir ID de manera segura
+					int idProfe = profe->GetValue("id")->Value().ToInt();
+
+					// Guardamos el ID dentro del objeto del ComboBox
+					// Usamos (INT_PTR) para evitar errores en 64 bits
+					cbProfes->Items->AddObject(nom + " " + ape, (TObject*)(INT_PTR)idProfe);
+				}
+			}
+			delete jsonRoot;
+		}
+	}
+	catch (...) {
+		cbProfes->TextHint = "Error al cargar profes";
+	}
+
+	// 7. BOTON GUARDAR (Movido mas abajo para que no se encime)
 	TButton *btnGuardar = new TButton(ventana);
 	btnGuardar->Parent = ventana;
 	btnGuardar->Left = 40;
-	btnGuardar->Top = 300;     // Abajo del todo
+	btnGuardar->Top = 340; // <--- BAJAMOS EL BOTÓN
 	btnGuardar->Width = 250;
 	btnGuardar->Height = 45;
 	btnGuardar->Caption = "GUARDAR ALUMNO";
 	btnGuardar->ModalResult = mrOk;
 
 
-if (ventana->ShowModal() == mrOk)
+	// --- MOSTRAR Y PROCESAR ---
+	if (ventana->ShowModal() == mrOk)
 	{
-		// Validamos datos obligatorios
 		if(eNombre->Text.IsEmpty() || eApellido->Text.IsEmpty() || eDNI->Text.IsEmpty()) {
 			ShowMessage("Faltan datos obligatorios (Nombre, Apellido, DNI).");
 		}
 		else
 		{
-			// Preparamos los datos
+			// --- RECUPERAR ID DEL PROFESOR SELECCIONADO ---
+			String idProfesorSeleccionado = "0";
+
+			if (cbProfes->ItemIndex >= 0) {
+				// CORRECCION 2: Recuperar el ID evitando el error de cast
+				// Primero a (INT_PTR) y luego a (int)
+				int id = (int)(INT_PTR)cbProfes->Items->Objects[cbProfes->ItemIndex];
+				idProfesorSeleccionado = IntToStr(id);
+			}
+
+			// Preparamos el cuerpo
 			String body = "nombre=" + eNombre->Text +
 						  "&apellido=" + eApellido->Text +
 						  "&dni=" + eDNI->Text +
 						  "&email=" + eEmail->Text +
-						  "&contrasena=" + ePass->Text;
+						  "&contrasena=" + ePass->Text +
+						  "&id_profesor=" + idProfesorSeleccionado;
 
-			// *** CAMBIO CLAVE: Usamos el archivo correcto "crear_alumno.php" ***
+			// Enviamos
 			String resp = HttpPost(L"/gimnasio_api/Admin/crear_alumno.php", body);
 
-		if (resp.Pos("Duplicate") > 0 && resp.Pos("dni") > 0)
-			{
+			if (resp.Pos("Duplicate") > 0 && resp.Pos("dni") > 0) {
 				ShowMessage("Error: Pusiste el mismo DNI que otro cliente.");
 			}
-			// 2. Si salió todo bien ("success")
-			else if (resp.Pos("success") > 0)
-			{
+			else if (resp.Pos("success") > 0) {
 				ShowMessage("Alumno creado correctamente.");
-				FormShow(this); // Recargar lista solo si se creó bien
+				FormShow(this);
 			}
-			// 3. Cualquier otro error raro
-			else
-			{
+			else {
 				ShowMessage("Hubo un error: " + resp);
 			}
 		}

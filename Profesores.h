@@ -24,6 +24,7 @@ __published:	// IDE-managed Components
 	void __fastcall BtnVentanaProductosClick(TObject *Sender);
 
 	void __fastcall FormShow(TObject *Sender);
+	void __fastcall AgregarProfesorClick(TObject *Sender);
 
 private:
 
@@ -32,6 +33,7 @@ private:
 	void __fastcall ClickEditar(TObject *Sender);
 	void __fastcall ClickGuardar(TObject *Sender);
 	void __fastcall ClickEliminar(TObject *Sender);
+    void __fastcall ClickAgregarAlumnoAProfesor(TObject *Sender);
 public:		// User declarations
 	__fastcall TProfesores(TComponent* Owner);
 };

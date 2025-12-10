@@ -56,10 +56,10 @@ object Profesores: TProfesores
     OnClick = BtnVentanaProductosClick
   end
   object ScrollBoxProfesores: TScrollBox
-    Left = 128
-    Top = 176
-    Width = 387
-    Height = 193
+    Left = 56
+    Top = 136
+    Width = 500
+    Height = 300
     TabOrder = 4
   end
   object AgregarProfesor: TButton
@@ -69,5 +69,6 @@ object Profesores: TProfesores
     Height = 25
     Caption = 'Agregar'
     TabOrder = 5
+    OnClick = AgregarProfesorClick
   end
 end
