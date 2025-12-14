@@ -435,19 +435,132 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 
 
 
-
 void __fastcall TProfesores::ClickAgregarAlumnoAProfesor(TObject *Sender)
 {
-	ShowMessage("agregamos un alumno al profesor");
+    // --- PASO 1: OBTENER EL ID DEL PROFESOR ACTUAL ---
+    TButton *btn = (TButton*)Sender;
+    TPanel *header = (TPanel*)btn->Parent;
+    TPanel *fila = (TPanel*)header->Parent;
+
+    String idProfesor = "";
+    String nombreProfesor = "";
+
+    // Buscamos el panel de detalles oculto para sacar el ID
+    TPanel *pnlDetalles = NULL;
+    for(int i=0; i<fila->ControlCount; i++) {
+        if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
+    }
+
+    if(pnlDetalles) {
+        for(int i=0; i<pnlDetalles->ControlCount; i++) {
+            TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
+            if(ed) {
+                if (ed->Tag == 5) idProfesor = ed->Text; // ID
+                if (ed->Tag == 1) nombreProfesor = ed->Text; // Nombre para el titulo
+            }
+        }
+    }
+
+    if (idProfesor.IsEmpty()) {
+        ShowMessage("Error: No se pudo identificar al profesor.");
+        return;
+    }
+
+    // --- PASO 2: CREAR VENTANA DE ALUMNOS ---
+    TForm *ventana = new TForm(this);
+    ventana->Caption = "Alumnos disponibles para: " + nombreProfesor;
+    ventana->Width = 400;
+    ventana->Height = 500;
+    ventana->Position = poMainFormCenter;
+    ventana->BorderStyle = bsDialog;
+
+    // Etiqueta
+    TLabel *lblInfo = new TLabel(ventana);
+    lblInfo->Parent = ventana;
+    lblInfo->Left = 20; lblInfo->Top = 10;
+    lblInfo->Caption = "Seleccione un alumno de la lista:";
+    lblInfo->Font->Style = TFontStyles() << fsBold;
+
+    // Lista (ListBox) para mostrar los alumnos
+    TListBox *listaAlumnos = new TListBox(ventana);
+    listaAlumnos->Parent = ventana;
+    listaAlumnos->SetBounds(20, 35, 345, 350);
+
+    // Botón Asignar
+    TButton *btnAsignar = new TButton(ventana);
+    btnAsignar->Parent = ventana;
+    btnAsignar->Caption = "ASIGNAR ALUMNO";
+    btnAsignar->SetBounds(20, 400, 345, 40);
+    btnAsignar->ModalResult = mrOk; // Esto hace que la ventana se cierre devolviendo "Ok"
+
+    // --- PASO 3: CARGAR ALUMNOS DESDE EL SERVIDOR ---
+    // Usamos la API que ya tienes para consultar alumnos
+    String json = HttpPost(L"/gimnasio_api/Admin/consultar_lista_alumnos.php", "");
+    TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
+
+    if (jsonRoot) {
+        try {
+            TJSONArray* dataArray = (TJSONArray*)jsonRoot->GetValue("data");
+            if (dataArray && !dataArray->Null) {
+                for (int i = 0; i < dataArray->Count; i++) {
+                    TJSONObject* alum = (TJSONObject*)dataArray->Items[i];
+                    String aId = alum->GetValue("id")->Value();
+                    String aNom = alum->GetValue("nombre")->Value();
+                    String aApe = alum->GetValue("apellido")->Value();
+
+                    // Agregamos a la lista visualmente: "ID - Nombre Apellido"
+                    // Esto nos servirá para extraer el ID luego
+                    listaAlumnos->Items->Add(aId + " - " + aNom + " " + aApe);
+                }
+            }
+        }
+        __finally {
+            delete jsonRoot;
+        }
+    }
+
+    // --- PASO 4: MOSTRAR VENTANA Y PROCESAR SELECCIÓN ---
+    if (ventana->ShowModal() == mrOk)
+    {
+        if (listaAlumnos->ItemIndex != -1) // Si seleccionó a alguien
+        {
+            String seleccion = listaAlumnos->Items->Strings[listaAlumnos->ItemIndex];
+
+            // Extraer el ID del string "15 - Juan Perez"
+            // Cortamos el string hasta donde está el guión
+            int posGuion = seleccion.Pos("-");
+            if (posGuion > 0)
+            {
+                String idAlumno = seleccion.SubString(1, posGuion - 1).Trim();
+
+                // ENVIAR AL PHP PARA GUARDAR LA RELACIÓN
+                String body = "profesor_id=" + idProfesor + "&alumno_id=" + idAlumno;
+
+                // NOTA: Necesitas crear este archivo PHP (ver abajo)
+                String respuesta = HttpPost(L"/gimnasio_api/Admin/asignar_alumno.php", body);
+
+                if (respuesta.Pos("success") > 0) {
+                    ShowMessage("¡Alumno asignado correctamente!");
+                } else {
+                    ShowMessage("Error al asignar: " + respuesta);
+                }
+            }
+        }
+        else
+        {
+            ShowMessage("No seleccionaste ningún alumno.");
+        }
+    }
+
+    delete ventana;
 }
 
 
 void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 {
-  {
 	// 1. Crear la ventana modal dinámicamente
 	TForm *ventana = new TForm(this);
-	ventana->Caption = "Nuevo Profesor"; // Cambiado título
+	ventana->Caption = "Nuevo Profesor";
 	ventana->Width = 350;
 	ventana->Height = 450;
 	ventana->Position = poMainFormCenter;
@@ -490,7 +603,7 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 	btnGuardar->Parent = ventana;
 	btnGuardar->Left = 40; btnGuardar->Top = 300;
 	btnGuardar->Width = 250; btnGuardar->Height = 45;
-	btnGuardar->Caption = "GUARDAR PROFESOR"; // Cambiado texto botón
+	btnGuardar->Caption = "GUARDAR PROFESOR";
 	btnGuardar->ModalResult = mrOk;
 
 	// --- MOSTRAR VENTANA Y PROCESAR ---
@@ -509,7 +622,7 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 						  "&email=" + eEmail->Text +
 						  "&contrasena=" + ePass->Text;
 
-			// *** CAMBIO IMPORTANTE: Apuntamos al PHP de PROFESORES ***
+			// Enviar al PHP de crear profesor
 			String resp = HttpPost(L"/gimnasio_api/Admin/crear_profesor.php", body);
 
 			if (resp.Pos("Duplicate") > 0 && resp.Pos("dni") > 0)
@@ -529,6 +642,6 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 	}
 	delete ventana;
 }
-}
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 
