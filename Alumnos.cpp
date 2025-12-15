@@ -10,7 +10,7 @@
 #include "Alumnos.h"
 #include "Ventas.h"
 #include "Productos.h"
-
+#include <System.DateUtils.hpp>
 #include "RequestHttp.h"
 
 //---------------------------------------------------------------------------
@@ -64,11 +64,13 @@ void __fastcall TAlumnos::BtnVentanaProductosClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+
 void __fastcall TAlumnos::FormShow(TObject *Sender)
 {
+	ScrollBoxAlumnos->Height = 400;
+
 
 	if (this->CanFocus()) this->SetFocus();
-
 
 	for (int i = ScrollBoxAlumnos->ControlCount - 1; i >= 0; i--) {
 		delete ScrollBoxAlumnos->Controls[i];
@@ -90,6 +92,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 				{
 					TJSONObject* alumno = (TJSONObject*)dataArray->Items[i];
 
+
 					String id = alumno->GetValue("id")->Value();
 					String nombre = alumno->GetValue("nombre")->Value();
 					String apellido = alumno->GetValue("apellido")->Value();
@@ -98,9 +101,21 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					String fecha_venc = alumno->GetValue("fecha_vencimiento")->Value();
 					String id_rutina = alumno->GetValue("id_rutina")->Value();
 
+
 					String email = alumno->GetValue("email")->Value().Trim();
 					int posSalto = email.Pos("\n");
 					if(posSalto > 0) email = email.SubString(1, posSalto - 1);
+
+
+					bool estaVencido = false;
+					try {
+						String fechaLimpia = StringReplace(fecha_venc, "-", "/", TReplaceFlags() << rfReplaceAll);
+						TDateTime fechaVencimientoDate = StrToDate(fechaLimpia);
+						if (fechaVencimientoDate < Now()) {
+							estaVencido = true;
+						}
+					}
+					catch (...) { estaVencido = true; }
 
 
 					TPanel *fila = new TPanel(ScrollBoxAlumnos);
@@ -121,7 +136,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					header->Color = clBtnFace;
 					header->ParentBackground = false;
 
-					// Botones
+
 					TButton *btnFlecha = new TButton(header);
 					btnFlecha->Parent = header; btnFlecha->Caption = "v"; btnFlecha->Width = 30;
 					btnFlecha->Align = alRight; btnFlecha->AlignWithMargins = true;
@@ -140,15 +155,10 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					btnEditar->OnClick = ClickEditar;
 
 					TButton *btnEliminar = new TButton(header);
-                    btnEliminar->Parent = header;
-					btnEliminar->Caption = "Eliminar";
-					btnEliminar->Width = 60;
-					btnEliminar->Align = alRight;
-					btnEliminar->AlignWithMargins = true;
-					btnEliminar->Visible = false;
-					btnEliminar->Tag = 30;
+					btnEliminar->Parent = header; btnEliminar->Caption = "Eliminar"; btnEliminar->Width = 60;
+					btnEliminar->Align = alRight; btnEliminar->AlignWithMargins = true;
+					btnEliminar->Visible = false; btnEliminar->Tag = 30;
 					btnEliminar->OnClick = ClickEliminar;
-
 
 					TLabel *lblTitulo = new TLabel(header);
 					lblTitulo->Parent = header;
@@ -182,13 +192,8 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 						e->Margins->Bottom = 15;
 						e->AlignWithMargins = true;
 						e->Tag = tagID;
-
-
 						e->Visible = visible;
-						if (!visible) {
-							e->TabStop = false;
-						}
-						// ------------------------------
+						if (!visible) e->TabStop = false;
 
 						if(visible) {
 							TLabel *l = new TLabel(pnlDetalles);
@@ -204,10 +209,75 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 
 
 					CrearCampo("Rutina", id_rutina, 8, false);
-					CrearCampo("Fecha", fecha_venc, 7, false);
+
+
+					TPanel *pnlRowFecha = new TPanel(pnlDetalles);
+					pnlRowFecha->Parent = pnlDetalles;
+					pnlRowFecha->Align = alTop;
+					pnlRowFecha->Height = 45;
+					pnlRowFecha->BevelOuter = bvNone;
+					pnlRowFecha->Color = clWhite;
+					pnlRowFecha->ParentBackground = false;
+					pnlRowFecha->Margins->Bottom = 15;
+					pnlRowFecha->AlignWithMargins = true;
+
+
+						TLabel *lblF = new TLabel(pnlRowFecha);
+						lblF->Parent = pnlRowFecha;
+						lblF->Align = alTop;
+						lblF->Caption = "Vencimiento Cuota";
+						lblF->Font->Size = 8;
+						lblF->Font->Color = clGray;
+						lblF->Margins->Bottom = 2;
+						lblF->AlignWithMargins = true;
+
+
+						TPanel *pnlAbajo = new TPanel(pnlRowFecha);
+						pnlAbajo->Parent = pnlRowFecha;
+						pnlAbajo->Align = alClient;
+						pnlAbajo->BevelOuter = bvNone;
+						pnlAbajo->Color = clWhite;
+						pnlAbajo->ParentBackground = false;
+
+
+							TCheckBox *chk = new TCheckBox(pnlAbajo);
+							chk->Parent = pnlAbajo;
+							chk->Align = alRight;
+							chk->Width = 20;
+							chk->Caption = "";
+							chk->Checked = !estaVencido;
+							chk->OnClick = ClickRealizarPago;
+
+
+							TLabel *lblEst = new TLabel(pnlAbajo);
+							lblEst->Parent = pnlAbajo;
+							lblEst->Align = alRight;
+							lblEst->Layout = tlCenter;
+							lblEst->AlignWithMargins = true;
+							lblEst->Margins->Right = 10;
+							lblEst->Font->Style = TFontStyles() << fsBold;
+							lblEst->Tag = 50;
+
+							if (estaVencido) {
+								lblEst->Caption = "DEBE PAGAR";
+								lblEst->Font->Color = clRed;
+							} else {
+								lblEst->Caption = "AL DÍA";
+								lblEst->Font->Color = clGreen;
+							}
+
+
+							TEdit *edF = new TEdit(pnlAbajo);
+							edF->Parent = pnlAbajo;
+							edF->Align = alClient;
+							edF->Text = fecha_venc;
+							edF->ReadOnly = true;
+							edF->BorderStyle = bsNone;
+							edF->Tag = 7;
+
+
 					CrearCampo("Pass", contrasena, 6, false);
 					CrearCampo("ID", id, 5, false);
-
 					CrearCampo("Email", email, 4, true);
 					CrearCampo("DNI", dni, 3, true);
 					CrearCampo("Apellido", apellido, 2, true);
@@ -215,11 +285,48 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 				}
 			}
 		}
-		__finally
-		{
-			delete jsonRoot;
+		catch (...) {}
+		delete jsonRoot;
+	}
+}
+void __fastcall TAlumnos::ClickRealizarPago(TObject *Sender)
+{
+	TCheckBox *chk = dynamic_cast<TCheckBox*>(Sender);
+	if (!chk) return;
+
+
+	if (!chk->Checked) return;
+
+
+	TPanel *pnlAbajo = dynamic_cast<TPanel*>(chk->Parent);
+	if (!pnlAbajo) return;
+
+
+	TEdit *editFecha = NULL;
+	for(int i=0; i<pnlAbajo->ControlCount; i++) {
+		TEdit *ed = dynamic_cast<TEdit*>(pnlAbajo->Controls[i]);
+		if(ed && ed->Tag == 7) editFecha = ed;
+	}
+
+	if (editFecha) {
+		try {
+
+			TDateTime nuevaFecha = IncMonth(Now(), 1);
+
+
+			editFecha->Text = FormatDateTime("yyyy-mm-dd", nuevaFecha);
+		} catch(...) {}
+	}
+
+	for(int i=0; i<pnlAbajo->ControlCount; i++) {
+		TLabel *lbl = dynamic_cast<TLabel*>(pnlAbajo->Controls[i]);
+		if(lbl && lbl->Tag == 50) {
+			lbl->Caption = "AL DÍA";
+			lbl->Font->Color = clGreen;
 		}
 	}
+
+
 }
 
 
@@ -231,7 +338,6 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-
 	TPanel *detalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) detalles = (TPanel*)fila->Controls[i];
@@ -241,7 +347,7 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 
 	if (abrir)
 	{
-		fila->Height = 320;
+		fila->Height = 420;
 		btn->Caption = "^";
 		if(detalles) detalles->Visible = true;
 	}
@@ -252,19 +358,13 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 		btn->Caption = "v";
 	}
 
-
-	// botones visibles
-	// ---------------------------------------------------------
 	for(int i=0; i<header->ControlCount; i++) {
 		int t = header->Controls[i]->Tag;
-
-
 		if(t == 10 || t == 20 || t == 30) {
 			header->Controls[i]->Visible = abrir;
 		}
 	}
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 {
@@ -304,14 +404,11 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 		}
 	}
 }
-
-
 void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 {
 	TButton *btn = (TButton*)Sender;
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
-
 
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
@@ -322,13 +419,12 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 	{
 		String id, nombre, apellido, dni, email, pass, fecha, rutina;
 
-
+		// 1. BUSQUEDA SUPERFICIAL
 		for (int i = 0; i < pnlDetalles->ControlCount; i++)
 		{
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 			if (ed)
 			{
-
 				switch (ed->Tag) {
 					case 1: nombre = ed->Text; break;
 					case 2: apellido = ed->Text; break;
@@ -336,11 +432,10 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 					case 4: email = ed->Text; break;
 					case 5: id = ed->Text; break;
 					case 6: pass = ed->Text; break;
-					case 7: fecha = ed->Text; break;
 					case 8: rutina = ed->Text; break;
 				}
 
-
+				// Restaurar estilo visual
 				if(ed->Visible) {
 					ed->ReadOnly = true;
 					ed->BorderStyle = bsNone;
@@ -349,27 +444,63 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 			}
 		}
 
+		// 2. BUSQUEDA PROFUNDA (Para la FECHA)
+		for(int i=0; i < pnlDetalles->ControlCount; i++) {
+			TPanel *panelHijo = dynamic_cast<TPanel*>(pnlDetalles->Controls[i]);
+			if(panelHijo) {
+				for(int j=0; j < panelHijo->ControlCount; j++) {
+					TPanel *panelNieto = dynamic_cast<TPanel*>(panelHijo->Controls[j]);
+					if(panelNieto) {
+						for(int k=0; k < panelNieto->ControlCount; k++) {
+							TEdit *edFecha = dynamic_cast<TEdit*>(panelNieto->Controls[k]);
+							if(edFecha && edFecha->Tag == 7) {
+								fecha = edFecha->Text;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (fecha.IsEmpty()) {
+			ShowMessage("Error: No se encuentra la fecha o está vacía.");
+			return;
+		}
+
 		if (id.IsEmpty()) return;
 
-
+		// ENVIAR A PHP
 		String body = "id=" + id + "&nombre=" + nombre + "&apellido=" + apellido +
 					  "&dni=" + dni + "&email=" + email + "&contrasena=" + pass +
 					  "&fecha_vencimiento=" + fecha + "&id_rutina=" + rutina;
 
 		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_alumno.php", body);
-		ShowMessage(respuesta);
 
+		// -------------------------------------------------------------
+		// CAMBIO REALIZADO AQUÍ:
+		// Verificamos si la respuesta del servidor contiene la palabra "success"
+		// -------------------------------------------------------------
+		if (respuesta.Pos("success") > 0)
+		{
+			ShowMessage("Guardado correctamente");
+		}
+		else
+		{
+			// Si falló, mostramos qué pasó para poder corregirlo
+			ShowMessage("Hubo un error al guardar: " + respuesta);
+		}
+		// -------------------------------------------------------------
 
+		// Actualizar titulo visual
 		for(int i=0; i<header->ControlCount; i++) {
 			TLabel *lbl = dynamic_cast<TLabel*>(header->Controls[i]);
 			if(lbl) {
 				lbl->Caption = "  " + nombre + " " + apellido;
 			}
 		}
-
-
 	}
 }
+
 
 
 
@@ -563,3 +694,4 @@ void __fastcall TAlumnos::ClickEliminar(TObject *Sender)
 		}
 	}
 }
+

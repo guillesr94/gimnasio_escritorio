@@ -94,12 +94,12 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 					String dni = profe->GetValue("dni")->Value();
 					String contrasena = profe->GetValue("contrasena")->Value();
 
-					// Limpieza del email (quitar saltos de linea si hay)
+
 					String email = profe->GetValue("email")->Value().Trim();
 					int posSalto = email.Pos("\n");
 					if(posSalto > 0) email = email.SubString(1, posSalto - 1);
 
-					// --- FILA PRINCIPAL ---
+
 					TPanel *fila = new TPanel(ScrollBoxProfesores);
 					fila->Parent = ScrollBoxProfesores;
 					fila->Align = alTop;
@@ -108,7 +108,7 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 					fila->BevelOuter = bvNone;
 					fila->Padding->SetBounds(5, 0, 5, 2);
 
-					// --- CABECERA ---
+
 					TPanel *header = new TPanel(fila);
 					header->Parent = fila;
 					header->Align = alTop;
@@ -152,7 +152,7 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 					btnAgAlumno->Tag = 40;
 					btnAgAlumno->OnClick = ClickAgregarAlumnoAProfesor;
 
-					// --- TITULO (AQUÍ SOLO NOMBRE Y APELLIDO, SIN EMAIL) ---
+
 					TLabel *lblTitulo = new TLabel(header);
 					lblTitulo->Parent = header;
 					lblTitulo->Caption = "  " + nombre + " " + apellido;
@@ -161,7 +161,7 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 					lblTitulo->Font->Size = 10;
 					lblTitulo->Font->Style = TFontStyles() << fsBold;
 
-					// --- DETALLES ---
+
 					TPanel *pnlDetalles = new TPanel(fila);
 					pnlDetalles->Parent = fila;
 					pnlDetalles->Align = alClient;
@@ -199,13 +199,12 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 						}
 					};
 
-					// --- CAMPOS (EL EMAIL ESTÁ AQUÍ Y ES EDITABLE) ---
-					// Se añaden de abajo hacia arriba visualmente
-					CrearCampo("Pass", contrasena, 6, false); // Oculto
-					CrearCampo("ID", id, 5, false);           // Oculto
+
+					CrearCampo("Pass", contrasena, 6, false);
+					CrearCampo("ID", id, 5, false);
 
 					// Visibles:
-					CrearCampo("Email", email, 4, true);      // <--- AQUÍ ESTÁ EL EMAIL EDITABLE
+					CrearCampo("Email", email, 4, true);
 					CrearCampo("DNI", dni, 3, true);
 					CrearCampo("Apellido", apellido, 2, true);
 					CrearCampo("Nombre", nombre, 1, true);
@@ -220,8 +219,11 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 }
 
 
-//---------------------------------------------------------------------------
-// ESTA ES LA FUNCIÓN QUE TE FALTABA
+
+
+
+
+
 //---------------------------------------------------------------------------
 void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 {
@@ -229,7 +231,7 @@ void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// Buscar panel detalles (Tag 99)
+
 	TPanel *detalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) detalles = (TPanel*)fila->Controls[i];
@@ -239,12 +241,11 @@ void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 
 	if (abrir)
 	{
-		// 1. Mostrar panel de detalles
+
 		btn->Caption = "^";
 		if(detalles) detalles->Visible = true;
 
-		// ---------------------------------------------------------
-		// CARGAR ALUMNOS SI NO EXISTEN (Tag 500)
+
 		// ---------------------------------------------------------
 		bool listaYaCargada = false;
 		if(detalles) {
@@ -255,38 +256,38 @@ void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 
 		if(detalles && !listaYaCargada)
 		{
-			// A. Obtener ID
+
 			String idProfesor = "";
 			for(int k=0; k < detalles->ControlCount; k++) {
 				TEdit *ed = dynamic_cast<TEdit*>(detalles->Controls[k]);
 				if(ed && ed->Tag == 5) idProfesor = ed->Text;
 			}
 
-			// B. Etiqueta "Alumnos Asignados"
+
 			TLabel *lblAlumnos = new TLabel(detalles);
 			lblAlumnos->Parent = detalles;
 			lblAlumnos->Align = alTop;
-			lblAlumnos->Top = 1000; // Forzar al fondo
+			lblAlumnos->Top = 1000;
 			lblAlumnos->Caption = "Alumnos Asignados:";
 			lblAlumnos->Font->Style = TFontStyles() << fsBold;
 			lblAlumnos->Margins->Top = 25;
 			lblAlumnos->Margins->Bottom = 5;
 			lblAlumnos->AlignWithMargins = true;
 
-			// C. Crear Lista con Scroll (ListBox)
+
 			TListBox *lb = new TListBox(detalles);
 			lb->Parent = detalles;
 			lb->Align = alTop;
-			lb->Top = 1001; // Forzar debajo del label
+			lb->Top = 10
 
-			// --- AQUÍ ESTÁ EL TRUCO VISUAL ---
-			lb->Height = 150;     // Altura fija: si hay más alumnos, sale scroll interno
-			lb->ItemHeight = 20;  // Altura cómoda por renglón
+
+			lb->Height = 150;
+			lb->ItemHeight = 20;
 			lb->Tag = 500;
 			lb->AlignWithMargins = true;
 			// ---------------------------------
 
-			// D. Llamar al PHP
+
 			if(!idProfesor.IsEmpty()) {
 				String body = "profesor_id=" + idProfesor;
 				String json = HttpPost(L"/gimnasio_api/Admin/consultar_alumnos_de_profesor.php", body);
@@ -312,16 +313,14 @@ void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 			}
 		}
 
-		// ---------------------------------------------------------
-		// 2. CALCULAR ALTURA AUTOMÁTICA (Para que nada se tape)
-		// ---------------------------------------------------------
-		int nuevaAltura = header->Height; // Empezamos con la cabecera (40)
+
+		int nuevaAltura = header->Height;
 
 		if (detalles) {
-			// Sumamos un poco de padding base del panel
+
 			nuevaAltura += detalles->Padding->Top + detalles->Padding->Bottom + 20;
 
-			// Sumamos la altura de cada hijo visible dentro de detalles
+
 			for(int i=0; i < detalles->ControlCount; i++) {
 				TControl *child = detalles->Controls[i];
 				if(child->Visible && child->Align == alTop) {
@@ -332,20 +331,19 @@ void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 			}
 		}
 
-		// Asignamos la altura calculada + un pequeño margen de seguridad
+
 		fila->Height = nuevaAltura + 10;
 		// ---------------------------------------------------------
 
 	}
 	else
 	{
-		// CERRAR
+
 		if(detalles) detalles->Visible = false;
 		fila->Height = 40;
 		btn->Caption = "v";
 	}
 
-	// Mostrar botones de cabecera
 	for(int i=0; i<header->ControlCount; i++) {
 		int t = header->Controls[i]->Tag;
 		if(t == 10 || t == 20 || t == 30 || t == 40) {
@@ -356,8 +354,7 @@ void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 
 
 
-//---------------------------------------------------------------------------
-// FUNCIONES DE LOS BOTONES
+
 //---------------------------------------------------------------------------
 void __fastcall TProfesores::ClickEditar(TObject *Sender)
 {
@@ -365,29 +362,29 @@ void __fastcall TProfesores::ClickEditar(TObject *Sender)
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// 1. Mostrar el botón "Guardar"
+
 	for(int i=0; i<header->ControlCount; i++) {
 		if(header->Controls[i]->Tag == 20) header->Controls[i]->Visible = true;
 	}
 
-	// 2. Buscar el panel de detalles
+
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
 	}
 
-	// 3. Convertir los TEdit VISIBLES en campos editables
+
 	if(pnlDetalles) {
 		bool primerFoco = true;
 
 		for(int i=0; i<pnlDetalles->ControlCount; i++) {
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 
-			// AQUÍ ESTÁ LA CLAVE: Si el email es visible, se vuelve editable
+
 			if(ed && ed->Visible) {
-				ed->ReadOnly = false;       // Permite escribir
-				ed->BorderStyle = bsSingle; // Borde visual
-				ed->Color = clWindow;       // Fondo blanco
+				ed->ReadOnly = false;
+				ed->BorderStyle = bsSingle;
+				ed->Color = clWindow;
 
 				if(primerFoco) {
 					ed->SetFocus();
@@ -424,7 +421,7 @@ void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 					case 1: nombre = ed->Text; break;
 					case 2: apellido = ed->Text; break;
 					case 3: dni = ed->Text; break;
-					case 4: email = ed->Text; break; // RECUPERA EL EMAIL EDITADO
+					case 4: email = ed->Text; break;
 					case 5: id = ed->Text; break;
 					case 6: contrasena = ed->Text; break;
 				}
@@ -439,7 +436,7 @@ void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 
 		if (id.IsEmpty()) return;
 
-		// 3. Enviar al servidor
+
 		String body = "id=" + id +
 					  "&nombre=" + nombre +
 					  "&apellido=" + apellido +
@@ -450,7 +447,7 @@ void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_profesor.php", body);
 		ShowMessage(respuesta);
 
-		// 4. ACTUALIZAR TÍTULO (SIN EMAIL, SOLO NOMBRE Y APELLIDO)
+
 		for(int i=0; i<header->ControlCount; i++) {
 			TLabel *lbl = dynamic_cast<TLabel*>(header->Controls[i]);
 			if(lbl) {
@@ -514,7 +511,7 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 
     void __fastcall TProfesores::ClickAgregarAlumnoAProfesor(TObject *Sender)
 {
-	// --- PASO 1: OBTENER EL ID DEL PROFESOR ACTUAL ---
+
 	TButton *btn = (TButton*)Sender;
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
@@ -522,7 +519,7 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 	String idProfesor = "";
 	String nombreProfesor = "";
 
-	// Buscamos el panel de detalles para sacar el ID y luego buscar la Lista
+
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
@@ -532,8 +529,8 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 		for(int i=0; i<pnlDetalles->ControlCount; i++) {
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 			if(ed) {
-				if (ed->Tag == 5) idProfesor = ed->Text;     // ID
-				if (ed->Tag == 1) nombreProfesor = ed->Text; // Nombre
+				if (ed->Tag == 5) idProfesor = ed->Text;
+				if (ed->Tag == 1) nombreProfesor = ed->Text;
 			}
 		}
 	}
@@ -543,7 +540,7 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 		return;
 	}
 
-	// --- PASO 2: CREAR VENTANA DE ALUMNOS (SELECCION) ---
+
 	TForm *ventana = new TForm(this);
 	ventana->Caption = "Asignar alumno a: " + nombreProfesor;
 	ventana->Width = 400;
@@ -567,7 +564,7 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 	btnAsignar->SetBounds(20, 400, 345, 40);
 	btnAsignar->ModalResult = mrOk;
 
-	// --- PASO 3: CARGAR LISTA DE TODOS LOS ALUMNOS ---
+
 	String json = HttpPost(L"/gimnasio_api/Admin/consultar_lista_alumnos.php", "");
 	TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
 
@@ -589,7 +586,6 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 		}
 	}
 
-	// --- PASO 4: MOSTRAR VENTANA Y PROCESAR ---
 	if (ventana->ShowModal() == mrOk)
 	{
 		if (listaAlumnos->ItemIndex != -1)
@@ -606,11 +602,7 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 				{
 					ShowMessage("¡Alumno asignado correctamente!");
 
-					// =========================================================
-					// NUEVO: ACTUALIZAR LA LISTA VISUAL AL INSTANTE
-					// =========================================================
 
-					// 1. Buscar el ListBox (Tag 500) dentro de pnlDetalles
 					TListBox *lbProfesor = NULL;
 					if (pnlDetalles) {
 						for(int k=0; k < pnlDetalles->ControlCount; k++) {
@@ -620,12 +612,12 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 						}
 					}
 
-					// 2. Si encontramos la lista, la recargamos
+
 					if (lbProfesor)
 					{
-						lbProfesor->Items->Clear(); // Limpiar lista vieja
+						lbProfesor->Items->Clear();
 
-						// Llamada al servidor para traer los alumnos actualizados de ESTE profesor
+
 						String bodyRefresh = "profesor_id=" + idProfesor;
 						String jsonRef = HttpPost(L"/gimnasio_api/Admin/consultar_alumnos_de_profesor.php", bodyRefresh);
 
@@ -707,7 +699,7 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 	ePass->Left = 40; ePass->Top = 230; ePass->Width = 250;
 	ePass->TextHint = "Contraseña";
 
-	//  boton guardar----------
+
 	TButton *btnGuardar = new TButton(ventana);
 	btnGuardar->Parent = ventana;
 	btnGuardar->Left = 40; btnGuardar->Top = 300;

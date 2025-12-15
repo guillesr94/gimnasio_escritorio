@@ -24,7 +24,8 @@ __published:	// IDE-managed Components
 	void __fastcall BtnVentanaProductosClick(TObject *Sender);
 	void __fastcall FormShow(TObject *Sender);
 	void __fastcall AgregarAlumnoClick(TObject *Sender);
-private:	// User declarations
+private:
+void __fastcall ClickRealizarPago(TObject *Sender);	// User declarations
 public:		// User declarations
 	__fastcall TAlumnos(TComponent* Owner);
 	void __fastcall ClickMostrarMas(TObject *Sender);
