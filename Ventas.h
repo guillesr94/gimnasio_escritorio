@@ -19,14 +19,22 @@ __published:	// IDE-managed Components
 	TButton *BtnVentanaProductos;
 	TStringGrid *GridProductos;
 	TLabel *Total;
+	TButton *CalcularTotal;
+	TLabel *Label2;
 	void __fastcall BtnVentanaProfesoresClick(TObject *Sender);
 	void __fastcall BtnVentanaCLientesClick(TObject *Sender);
 	void __fastcall BtnVentanaVentasClick(TObject *Sender);
 	void __fastcall BtnVentanaProductosClick(TObject *Sender);
+	void __fastcall GridProductosSelectCell(TObject *Sender, System::LongInt ACol, System::LongInt ARow,
+          bool &CanSelect);
+	void __fastcall CalcularTotalClick(TObject *Sender);
+
+
+
 private:
 
-    void CargarDatosEnLaGrilla();
-public:		// User declarations
+	void CargarDatosEnLaGrilla();
+public:
 	__fastcall TVentas(TComponent* Owner);
 };
 //---------------------------------------------------------------------------
