@@ -60,6 +60,7 @@ void __fastcall TProfesores::BtnVentanaProductosClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+
 void __fastcall TProfesores::FormShow(TObject *Sender)
 {
 	if (this->CanFocus()) this->SetFocus();
@@ -93,6 +94,7 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 					String dni = profe->GetValue("dni")->Value();
 					String contrasena = profe->GetValue("contrasena")->Value();
 
+					// Limpieza del email (quitar saltos de linea si hay)
 					String email = profe->GetValue("email")->Value().Trim();
 					int posSalto = email.Pos("\n");
 					if(posSalto > 0) email = email.SubString(1, posSalto - 1);
@@ -117,28 +119,23 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 					header->ParentBackground = false;
 
 					// --- BOTONES ---
-
-					// 1. Flecha
 					TButton *btnFlecha = new TButton(header);
 					btnFlecha->Parent = header; btnFlecha->Caption = "v"; btnFlecha->Width = 30;
 					btnFlecha->Align = alRight; btnFlecha->AlignWithMargins = true;
-					btnFlecha->OnClick = ClickMostrarMas; // <--- AQUÍ LA USAS
+					btnFlecha->OnClick = ClickMostrarMas;
 
-					// 2. Guardar
 					TButton *btnGuardar = new TButton(header);
 					btnGuardar->Parent = header; btnGuardar->Caption = "Guardar"; btnGuardar->Width = 60;
 					btnGuardar->Align = alRight; btnGuardar->AlignWithMargins = true;
 					btnGuardar->Visible = false; btnGuardar->Tag = 20;
 					btnGuardar->OnClick = ClickGuardar;
 
-					// 3. Editar
 					TButton *btnEditar = new TButton(header);
 					btnEditar->Parent = header; btnEditar->Caption = "Editar"; btnEditar->Width = 60;
 					btnEditar->Align = alRight; btnEditar->AlignWithMargins = true;
 					btnEditar->Visible = false; btnEditar->Tag = 10;
 					btnEditar->OnClick = ClickEditar;
 
-					// 4. Eliminar
 					TButton *btnEliminar = new TButton(header);
 					btnEliminar->Parent = header; btnEliminar->Caption = "Eliminar";
 					btnEliminar->Width = 60; btnEliminar->Align = alRight;
@@ -147,15 +144,15 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 					btnEliminar->OnClick = ClickEliminar;
 
 					TButton *btnAgAlumno = new TButton(header);
-					btnAgAlumno->Parent = header;
-					btnAgAlumno->Caption = "Agregar Alumno";
-					btnAgAlumno->Width = 100;
+					btnAgAlumno->Parent = header; btnAgAlumno->Caption = "Alumnos";
+					btnAgAlumno->Width = 70;
 					btnAgAlumno->Align = alRight;
 					btnAgAlumno->AlignWithMargins = true;
 					btnAgAlumno->Visible = false;
 					btnAgAlumno->Tag = 40;
 					btnAgAlumno->OnClick = ClickAgregarAlumnoAProfesor;
 
+					// --- TITULO (AQUÍ SOLO NOMBRE Y APELLIDO, SIN EMAIL) ---
 					TLabel *lblTitulo = new TLabel(header);
 					lblTitulo->Parent = header;
 					lblTitulo->Caption = "  " + nombre + " " + apellido;
@@ -202,10 +199,13 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 						}
 					};
 
-					// --- CAMPOS ---
-					CrearCampo("Pass", contrasena, 6, false);
-					CrearCampo("ID", id, 5, false);
-					CrearCampo("Email", email, 4, true);
+					// --- CAMPOS (EL EMAIL ESTÁ AQUÍ Y ES EDITABLE) ---
+					// Se añaden de abajo hacia arriba visualmente
+					CrearCampo("Pass", contrasena, 6, false); // Oculto
+					CrearCampo("ID", id, 5, false);           // Oculto
+
+					// Visibles:
+					CrearCampo("Email", email, 4, true);      // <--- AQUÍ ESTÁ EL EMAIL EDITABLE
 					CrearCampo("DNI", dni, 3, true);
 					CrearCampo("Apellido", apellido, 2, true);
 					CrearCampo("Nombre", nombre, 1, true);
@@ -219,109 +219,142 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 	}
 }
 
+
 //---------------------------------------------------------------------------
 // ESTA ES LA FUNCIÓN QUE TE FALTABA
 //---------------------------------------------------------------------------
 void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 {
-    TButton *btn = (TButton*)Sender;
-    TPanel *header = (TPanel*)btn->Parent;
-    TPanel *fila = (TPanel*)header->Parent;
+	TButton *btn = (TButton*)Sender;
+	TPanel *header = (TPanel*)btn->Parent;
+	TPanel *fila = (TPanel*)header->Parent;
 
-    // Buscar panel detalles (Tag 99)
-    TPanel *detalles = NULL;
-    for(int i=0; i<fila->ControlCount; i++) {
-        if(fila->Controls[i]->Tag == 99) detalles = (TPanel*)fila->Controls[i];
-    }
+	// Buscar panel detalles (Tag 99)
+	TPanel *detalles = NULL;
+	for(int i=0; i<fila->ControlCount; i++) {
+		if(fila->Controls[i]->Tag == 99) detalles = (TPanel*)fila->Controls[i];
+	}
 
-    bool abrir = (fila->Height == 40);
+	bool abrir = (fila->Height == 40);
 
-    if (abrir)
-    {
-        // 1. Expandir fila
-        fila->Height = 350; // AUMENTAMOS LA ALTURA PARA QUE QUEPA LA LISTA
-        btn->Caption = "^";
-        if(detalles) detalles->Visible = true;
+	if (abrir)
+	{
+		// 1. Mostrar panel de detalles
+		btn->Caption = "^";
+		if(detalles) detalles->Visible = true;
 
-        // ---------------------------------------------------------
-        // NUEVO: CARGAR ALUMNOS SI NO EXISTEN
-        // Buscamos si ya existe la lista (le pondremos Tag 500)
-        // ---------------------------------------------------------
-        bool listaYaCargada = false;
-        if(detalles) {
-            for(int k=0; k < detalles->ControlCount; k++) {
-                if(detalles->Controls[k]->Tag == 500) listaYaCargada = true;
-            }
-        }
+		// ---------------------------------------------------------
+		// CARGAR ALUMNOS SI NO EXISTEN (Tag 500)
+		// ---------------------------------------------------------
+		bool listaYaCargada = false;
+		if(detalles) {
+			for(int k=0; k < detalles->ControlCount; k++) {
+				if(detalles->Controls[k]->Tag == 500) listaYaCargada = true;
+			}
+		}
 
-        if(detalles && !listaYaCargada)
-        {
-            // A. Obtener ID del profesor del TEdit oculto (Tag 5)
-            String idProfesor = "";
-            for(int k=0; k < detalles->ControlCount; k++) {
-                TEdit *ed = dynamic_cast<TEdit*>(detalles->Controls[k]);
-                if(ed && ed->Tag == 5) idProfesor = ed->Text;
-            }
+		if(detalles && !listaYaCargada)
+		{
+			// A. Obtener ID
+			String idProfesor = "";
+			for(int k=0; k < detalles->ControlCount; k++) {
+				TEdit *ed = dynamic_cast<TEdit*>(detalles->Controls[k]);
+				if(ed && ed->Tag == 5) idProfesor = ed->Text;
+			}
 
-            // B. Crear TListBox visualmente
-            TLabel *lblAlumnos = new TLabel(detalles);
-            lblAlumnos->Parent = detalles;
-            lblAlumnos->Align = alBottom;
-            lblAlumnos->Caption = "Alumnos Asignados:";
-            lblAlumnos->Font->Style = TFontStyles() << fsBold;
-            lblAlumnos->Margins->Top = 10;
-            lblAlumnos->AlignWithMargins = true;
+			// B. Etiqueta "Alumnos Asignados"
+			TLabel *lblAlumnos = new TLabel(detalles);
+			lblAlumnos->Parent = detalles;
+			lblAlumnos->Align = alTop;
+			lblAlumnos->Top = 1000; // Forzar al fondo
+			lblAlumnos->Caption = "Alumnos Asignados:";
+			lblAlumnos->Font->Style = TFontStyles() << fsBold;
+			lblAlumnos->Margins->Top = 25;
+			lblAlumnos->Margins->Bottom = 5;
+			lblAlumnos->AlignWithMargins = true;
 
-            TListBox *lb = new TListBox(detalles);
-            lb->Parent = detalles;
-            lb->Align = alBottom;
-            lb->Height = 100; // Altura de la lista
-            lb->Tag = 500;    // Marcamos para no volver a cargar
-            lb->AlignWithMargins = true;
+			// C. Crear Lista con Scroll (ListBox)
+			TListBox *lb = new TListBox(detalles);
+			lb->Parent = detalles;
+			lb->Align = alTop;
+			lb->Top = 1001; // Forzar debajo del label
 
-            // C. Llamar al PHP
-            if(!idProfesor.IsEmpty()) {
-                String body = "profesor_id=" + idProfesor;
-                String json = HttpPost(L"/gimnasio_api/Admin/consultar_alumnos_de_profesor.php", body);
+			// --- AQUÍ ESTÁ EL TRUCO VISUAL ---
+			lb->Height = 150;     // Altura fija: si hay más alumnos, sale scroll interno
+			lb->ItemHeight = 20;  // Altura cómoda por renglón
+			lb->Tag = 500;
+			lb->AlignWithMargins = true;
+			// ---------------------------------
 
-                // Parsear JSON
-                TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
-                if(jsonRoot) {
-                    try {
-                        TJSONArray* arr = (TJSONArray*)jsonRoot->GetValue("data");
-                        if(arr && !arr->Null) {
-                            for(int i=0; i < arr->Count; i++) {
-                                TJSONObject* obj = (TJSONObject*)arr->Items[i];
-                                String nom = obj->GetValue("nombre")->Value();
-                                String ape = obj->GetValue("apellido")->Value();
-                                lb->Items->Add(" - " + nom + " " + ape);
-                            }
-                        }
-                        if(lb->Items->Count == 0) lb->Items->Add("(Sin alumnos asignados)");
-                    }
-                    __finally {
-                        delete jsonRoot;
-                    }
-                }
-            }
-        }
-        // ---------------------------------------------------------
-    }
-    else
-    {
-        if(detalles) detalles->Visible = false;
-        fila->Height = 40;
-        btn->Caption = "v";
-    }
+			// D. Llamar al PHP
+			if(!idProfesor.IsEmpty()) {
+				String body = "profesor_id=" + idProfesor;
+				String json = HttpPost(L"/gimnasio_api/Admin/consultar_alumnos_de_profesor.php", body);
 
-    // Botones de cabecera
-    for(int i=0; i<header->ControlCount; i++) {
-        int t = header->Controls[i]->Tag;
-        if(t == 10 || t == 20 || t == 30 || t == 40) {
-            header->Controls[i]->Visible = abrir;
-        }
-    }
+				TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
+				if(jsonRoot) {
+					try {
+						TJSONArray* arr = (TJSONArray*)jsonRoot->GetValue("data");
+						if(arr && !arr->Null) {
+							for(int i=0; i < arr->Count; i++) {
+								TJSONObject* obj = (TJSONObject*)arr->Items[i];
+								String nom = obj->GetValue("nombre")->Value();
+								String ape = obj->GetValue("apellido")->Value();
+								lb->Items->Add(" - " + nom + " " + ape);
+							}
+						}
+						if(lb->Items->Count == 0) lb->Items->Add("(Sin alumnos asignados)");
+					}
+					__finally {
+						delete jsonRoot;
+					}
+				}
+			}
+		}
+
+		// ---------------------------------------------------------
+		// 2. CALCULAR ALTURA AUTOMÁTICA (Para que nada se tape)
+		// ---------------------------------------------------------
+		int nuevaAltura = header->Height; // Empezamos con la cabecera (40)
+
+		if (detalles) {
+			// Sumamos un poco de padding base del panel
+			nuevaAltura += detalles->Padding->Top + detalles->Padding->Bottom + 20;
+
+			// Sumamos la altura de cada hijo visible dentro de detalles
+			for(int i=0; i < detalles->ControlCount; i++) {
+				TControl *child = detalles->Controls[i];
+				if(child->Visible && child->Align == alTop) {
+					nuevaAltura += child->Height;
+					nuevaAltura += child->Margins->Top;
+					nuevaAltura += child->Margins->Bottom;
+				}
+			}
+		}
+
+		// Asignamos la altura calculada + un pequeño margen de seguridad
+		fila->Height = nuevaAltura + 10;
+		// ---------------------------------------------------------
+
+	}
+	else
+	{
+		// CERRAR
+		if(detalles) detalles->Visible = false;
+		fila->Height = 40;
+		btn->Caption = "v";
+	}
+
+	// Mostrar botones de cabecera
+	for(int i=0; i<header->ControlCount; i++) {
+		int t = header->Controls[i]->Tag;
+		if(t == 10 || t == 20 || t == 30 || t == 40) {
+			header->Controls[i]->Visible = abrir;
+		}
+	}
 }
+
+
 
 //---------------------------------------------------------------------------
 // FUNCIONES DE LOS BOTONES
@@ -332,34 +365,30 @@ void __fastcall TProfesores::ClickEditar(TObject *Sender)
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// 1. Mostrar el botón "Guardar" (Tag 20)
-	// No ocultamos el botón Editar, para que el usuario sepa que está en modo edición
+	// 1. Mostrar el botón "Guardar"
 	for(int i=0; i<header->ControlCount; i++) {
 		if(header->Controls[i]->Tag == 20) header->Controls[i]->Visible = true;
 	}
 
-	// 2. Buscar el panel de detalles (Tag 99)
+	// 2. Buscar el panel de detalles
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
 	}
 
-	// 3. Convertir los TEdit en campos editables
+	// 3. Convertir los TEdit VISIBLES en campos editables
 	if(pnlDetalles) {
-		bool primerFoco = true; // Para poner el cursor en el primer campo
+		bool primerFoco = true;
 
 		for(int i=0; i<pnlDetalles->ControlCount; i++) {
-			// Intentamos ver si el control es un TEdit
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 
-			// Solo modificamos si es un TEdit y si es VISIBLE
-			// (No queremos desbloquear el ID o el Password oculto accidentalmente si no se ven)
+			// AQUÍ ESTÁ LA CLAVE: Si el email es visible, se vuelve editable
 			if(ed && ed->Visible) {
 				ed->ReadOnly = false;       // Permite escribir
-				ed->BorderStyle = bsSingle; // Le pone borde de cajita (visual)
-				ed->Color = clWindow;       // Le pone fondo blanco estándar
+				ed->BorderStyle = bsSingle; // Borde visual
+				ed->Color = clWindow;       // Fondo blanco
 
-				// Poner el foco en el primer campo que encontremos (usualmente Nombre)
 				if(primerFoco) {
 					ed->SetFocus();
 					primerFoco = false;
@@ -369,13 +398,13 @@ void __fastcall TProfesores::ClickEditar(TObject *Sender)
 	}
 }
 
+
 void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 {
 	TButton *btn = (TButton*)Sender;
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// 1. Buscar el panel de detalles
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
@@ -383,38 +412,34 @@ void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 
 	if (pnlDetalles)
 	{
-		// Variables exclusivas de Profesores (Sin fecha ni rutina)
 		String id, nombre, apellido, dni, email, contrasena;
 
-		// 2. Leer datos y BLOQUEAR LOS CAMPOS (Efecto visual de guardado)
+		// 2. Leer datos
 		for (int i = 0; i < pnlDetalles->ControlCount; i++)
 		{
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 			if (ed)
 			{
-				// Leemos el valor según los Tags que pusimos en FormShow
 				switch (ed->Tag) {
 					case 1: nombre = ed->Text; break;
 					case 2: apellido = ed->Text; break;
 					case 3: dni = ed->Text; break;
-					case 4: email = ed->Text; break;
+					case 4: email = ed->Text; break; // RECUPERA EL EMAIL EDITADO
 					case 5: id = ed->Text; break;
 					case 6: contrasena = ed->Text; break;
 				}
 
-				// --- TRUCO VISUAL (Igual que en Alumnos) ---
-				// Volvemos a poner los campos "lindos" (sin bordes y bloqueados)
 				if(ed->Visible) {
-					ed->ReadOnly = true;         // Bloqueamos escritura
-					ed->BorderStyle = bsNone;    // Quitamos borde
-					ed->Color = clWhite;         // Fondo blanco limpio
+					ed->ReadOnly = true;
+					ed->BorderStyle = bsNone;
+					ed->Color = clWhite;
 				}
 			}
 		}
 
 		if (id.IsEmpty()) return;
 
-		// 3. Enviar al servidor (Adaptado a tu PHP de Profesores)
+		// 3. Enviar al servidor
 		String body = "id=" + id +
 					  "&nombre=" + nombre +
 					  "&apellido=" + apellido +
@@ -422,11 +447,10 @@ void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 					  "&email=" + email +
 					  "&contrasena=" + contrasena;
 
-		// Llamada al script que ya probaste en Postman
 		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_profesor.php", body);
 		ShowMessage(respuesta);
 
-		// 4. ACTUALIZAR EL TITULO DEL PROFESOR (Por si cambiaste el nombre)
+		// 4. ACTUALIZAR TÍTULO (SIN EMAIL, SOLO NOMBRE Y APELLIDO)
 		for(int i=0; i<header->ControlCount; i++) {
 			TLabel *lbl = dynamic_cast<TLabel*>(header->Controls[i]);
 			if(lbl) {
@@ -437,15 +461,12 @@ void __fastcall TProfesores::ClickGuardar(TObject *Sender)
 }
 
 
-
-
 void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 {
 	TButton *btn = (TButton*)Sender;
 	TPanel *header = (TPanel*)btn->Parent;
-	TPanel *fila = (TPanel*)header->Parent; // Obtenemos la fila completa
+	TPanel *fila = (TPanel*)header->Parent;
 
-	// 1. Buscamos el panel de detalles oculto (donde guardamos los datos)
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
@@ -456,37 +477,27 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 		String nombre = "";
 		String apellido = "";
 
-		// 2. Extraemos ID (Tag 5), Nombre (Tag 1) y Apellido (Tag 2)
-		// Asumimos que en el FormShow de Profesores usaste los mismos Tags que en Alumnos
 		for(int i=0; i<pnlDetalles->ControlCount; i++) {
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 			if(ed) {
 				if (ed->Tag == 1) nombre = ed->Text;
 				if (ed->Tag == 2) apellido = ed->Text;
-				if (ed->Tag == 5) id = ed->Text.Trim(); // Trim limpia espacios vacíos
+				if (ed->Tag == 5) id = ed->Text.Trim();
 			}
 		}
 
 		if(id.IsEmpty()) return;
 
-		// 3. Confirmación
 		String mensaje = "¿Seguro que quieres eliminar al profesor: " + nombre + " " + apellido + "?";
 
 		if(MessageDlg(mensaje, mtConfirmation, TMsgDlgButtons() << mbYes << mbNo, 0) == mrYes)
 		{
-			// A) Preparamos los datos
 			String body = "id=" + id;
-
-			// B) Enviamos la petición al PHP de PROFESORES
 			String respuesta = HttpPost(L"/gimnasio_api/Admin/eliminar_profesor.php", body);
 
-			// C) Verificamos respuesta
 			if (respuesta.Pos("success") > 0)
 			{
 				ShowMessage("Profesor eliminado correctamente.");
-
-				// --- EVITAMOS EL ERROR "ACCESS VIOLATION" ---
-				// En lugar de recargar toda la ventana (FormShow), solo ocultamos esta fila.
 				fila->Visible = false;
 				fila->Parent = NULL;
 			}
@@ -496,126 +507,164 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 			}
 		}
 	}
-}
-
-
-
-void __fastcall TProfesores::ClickAgregarAlumnoAProfesor(TObject *Sender)
-{
-    // --- PASO 1: OBTENER EL ID DEL PROFESOR ACTUAL ---
-    TButton *btn = (TButton*)Sender;
-    TPanel *header = (TPanel*)btn->Parent;
-    TPanel *fila = (TPanel*)header->Parent;
-
-    String idProfesor = "";
-	String nombreProfesor = "";
-
-    // Buscamos el panel de detalles oculto para sacar el ID
-    TPanel *pnlDetalles = NULL;
-    for(int i=0; i<fila->ControlCount; i++) {
-        if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
-    }
-
-    if(pnlDetalles) {
-		for(int i=0; i<pnlDetalles->ControlCount; i++) {
-            TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
-            if(ed) {
-                if (ed->Tag == 5) idProfesor = ed->Text; // ID
-                if (ed->Tag == 1) nombreProfesor = ed->Text; // Nombre para el titulo
-            }
-        }
-    }
-
-	if (idProfesor.IsEmpty()) {
-        ShowMessage("Error: No se pudo identificar al profesor.");
-        return;
-    }
-
-    // --- PASO 2: CREAR VENTANA DE ALUMNOS ---
-    TForm *ventana = new TForm(this);
-    ventana->Caption = "Asignar alumno a: " + nombreProfesor;
-    ventana->Width = 400;
-	ventana->Height = 500;
-    ventana->Position = poMainFormCenter;
-    ventana->BorderStyle = bsDialog;
-
-    // Etiqueta
-    TLabel *lblInfo = new TLabel(ventana);
-    lblInfo->Parent = ventana;
-    lblInfo->Left = 20; lblInfo->Top = 10;
-    lblInfo->Caption = "Seleccione un alumno de la lista:";
-	lblInfo->Font->Style = TFontStyles() << fsBold;
-
-    // Lista (ListBox) para mostrar los alumnos
-    TListBox *listaAlumnos = new TListBox(ventana);
-    listaAlumnos->Parent = ventana;
-    listaAlumnos->SetBounds(20, 35, 345, 350);
-
-    // Botón Asignar
-    TButton *btnAsignar = new TButton(ventana);
-	btnAsignar->Parent = ventana;
-    btnAsignar->Caption = "ASIGNAR A ESTE PROFESOR";
-    btnAsignar->SetBounds(20, 400, 345, 40);
-    btnAsignar->ModalResult = mrOk;
-
-    // --- PASO 3: CARGAR ALUMNOS DESDE EL SERVIDOR ---
-	String json = HttpPost(L"/gimnasio_api/Admin/consultar_lista_alumnos.php", "");
-    TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
-
-	if (jsonRoot) {
-        try {
-            TJSONArray* dataArray = (TJSONArray*)jsonRoot->GetValue("data");
-            if (dataArray && !dataArray->Null) {
-                for (int i = 0; i < dataArray->Count; i++) {
-                    TJSONObject* alum = (TJSONObject*)dataArray->Items[i];
-                    String aId = alum->GetValue("id")->Value();
-                    String aNom = alum->GetValue("nombre")->Value();
-                    String aApe = alum->GetValue("apellido")->Value();
-
-                    // Formato: "ID - Nombre Apellido"
-                    listaAlumnos->Items->Add(aId + " - " + aNom + " " + aApe);
-                }
-            }
-        }
-        __finally {
-            delete jsonRoot;
-        }
 	}
 
-    // --- PASO 4: MOSTRAR VENTANA Y PROCESAR SELECCIÓN ---
-    if (ventana->ShowModal() == mrOk)
-    {
-        if (listaAlumnos->ItemIndex != -1)
-        {
-            String seleccion = listaAlumnos->Items->Strings[listaAlumnos->ItemIndex];
 
-			// Extraer el ID antes del guión
-            int posGuion = seleccion.Pos("-");
-            if (posGuion > 0)
-            {
-                String idAlumno = seleccion.SubString(1, posGuion - 1).Trim();
 
-                // ENVIAR AL PHP (La magia ocurre aqui)
-                String body = "profesor_id=" + idProfesor + "&alumno_id=" + idAlumno;
 
-				// Usamos el archivo que probamos en Postman
-                String respuesta = HttpPost(L"/gimnasio_api/Admin/asignar_alumno.php", body);
+    void __fastcall TProfesores::ClickAgregarAlumnoAProfesor(TObject *Sender)
+{
+	// --- PASO 1: OBTENER EL ID DEL PROFESOR ACTUAL ---
+	TButton *btn = (TButton*)Sender;
+	TPanel *header = (TPanel*)btn->Parent;
+	TPanel *fila = (TPanel*)header->Parent;
 
-                if (respuesta.Pos("success") > 0) {
-                    ShowMessage("¡Alumno asignado correctamente!");
-                } else {
-                    ShowMessage("Error al asignar: " + respuesta);
-                }
-            }
+	String idProfesor = "";
+	String nombreProfesor = "";
+
+	// Buscamos el panel de detalles para sacar el ID y luego buscar la Lista
+	TPanel *pnlDetalles = NULL;
+	for(int i=0; i<fila->ControlCount; i++) {
+		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
+	}
+
+	if(pnlDetalles) {
+		for(int i=0; i<pnlDetalles->ControlCount; i++) {
+			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
+			if(ed) {
+				if (ed->Tag == 5) idProfesor = ed->Text;     // ID
+				if (ed->Tag == 1) nombreProfesor = ed->Text; // Nombre
+			}
 		}
-        else
-        {
-            ShowMessage("No seleccionaste ningún alumno.");
-        }
-    }
+	}
 
-    delete ventana;
+	if (idProfesor.IsEmpty()) {
+		ShowMessage("Error: No se pudo identificar al profesor.");
+		return;
+	}
+
+	// --- PASO 2: CREAR VENTANA DE ALUMNOS (SELECCION) ---
+	TForm *ventana = new TForm(this);
+	ventana->Caption = "Asignar alumno a: " + nombreProfesor;
+	ventana->Width = 400;
+	ventana->Height = 500;
+	ventana->Position = poMainFormCenter;
+	ventana->BorderStyle = bsDialog;
+
+	TLabel *lblInfo = new TLabel(ventana);
+	lblInfo->Parent = ventana;
+	lblInfo->Left = 20; lblInfo->Top = 10;
+	lblInfo->Caption = "Seleccione un alumno de la lista:";
+	lblInfo->Font->Style = TFontStyles() << fsBold;
+
+	TListBox *listaAlumnos = new TListBox(ventana);
+	listaAlumnos->Parent = ventana;
+	listaAlumnos->SetBounds(20, 35, 345, 350);
+
+	TButton *btnAsignar = new TButton(ventana);
+	btnAsignar->Parent = ventana;
+	btnAsignar->Caption = "ASIGNAR A ESTE PROFESOR";
+	btnAsignar->SetBounds(20, 400, 345, 40);
+	btnAsignar->ModalResult = mrOk;
+
+	// --- PASO 3: CARGAR LISTA DE TODOS LOS ALUMNOS ---
+	String json = HttpPost(L"/gimnasio_api/Admin/consultar_lista_alumnos.php", "");
+	TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
+
+	if (jsonRoot) {
+		try {
+			TJSONArray* dataArray = (TJSONArray*)jsonRoot->GetValue("data");
+			if (dataArray && !dataArray->Null) {
+				for (int i = 0; i < dataArray->Count; i++) {
+					TJSONObject* alum = (TJSONObject*)dataArray->Items[i];
+					String aId = alum->GetValue("id")->Value();
+					String aNom = alum->GetValue("nombre")->Value();
+					String aApe = alum->GetValue("apellido")->Value();
+					listaAlumnos->Items->Add(aId + " - " + aNom + " " + aApe);
+				}
+			}
+		}
+		__finally {
+			delete jsonRoot;
+		}
+	}
+
+	// --- PASO 4: MOSTRAR VENTANA Y PROCESAR ---
+	if (ventana->ShowModal() == mrOk)
+	{
+		if (listaAlumnos->ItemIndex != -1)
+		{
+			String seleccion = listaAlumnos->Items->Strings[listaAlumnos->ItemIndex];
+			int posGuion = seleccion.Pos("-");
+			if (posGuion > 0)
+			{
+				String idAlumno = seleccion.SubString(1, posGuion - 1).Trim();
+				String body = "profesor_id=" + idProfesor + "&alumno_id=" + idAlumno;
+				String respuesta = HttpPost(L"/gimnasio_api/Admin/asignar_alumno.php", body);
+
+				if (respuesta.Pos("success") > 0)
+				{
+					ShowMessage("¡Alumno asignado correctamente!");
+
+					// =========================================================
+					// NUEVO: ACTUALIZAR LA LISTA VISUAL AL INSTANTE
+					// =========================================================
+
+					// 1. Buscar el ListBox (Tag 500) dentro de pnlDetalles
+					TListBox *lbProfesor = NULL;
+					if (pnlDetalles) {
+						for(int k=0; k < pnlDetalles->ControlCount; k++) {
+							if (pnlDetalles->Controls[k]->Tag == 500) {
+								lbProfesor = dynamic_cast<TListBox*>(pnlDetalles->Controls[k]);
+							}
+						}
+					}
+
+					// 2. Si encontramos la lista, la recargamos
+					if (lbProfesor)
+					{
+						lbProfesor->Items->Clear(); // Limpiar lista vieja
+
+						// Llamada al servidor para traer los alumnos actualizados de ESTE profesor
+						String bodyRefresh = "profesor_id=" + idProfesor;
+						String jsonRef = HttpPost(L"/gimnasio_api/Admin/consultar_alumnos_de_profesor.php", bodyRefresh);
+
+						TJSONObject* jsonRootRef = (TJSONObject*)TJSONObject::ParseJSONValue(jsonRef);
+						if(jsonRootRef) {
+							try {
+								TJSONArray* arr = (TJSONArray*)jsonRootRef->GetValue("data");
+								if(arr && !arr->Null) {
+									for(int i=0; i < arr->Count; i++) {
+										TJSONObject* obj = (TJSONObject*)arr->Items[i];
+										String nom = obj->GetValue("nombre")->Value();
+										String ape = obj->GetValue("apellido")->Value();
+										lbProfesor->Items->Add(" - " + nom + " " + ape);
+									}
+								}
+								// Si quedó vacía (raro porque acabamos de agregar uno), aviso visual
+								if(lbProfesor->Items->Count == 0) lbProfesor->Items->Add("(Sin alumnos asignados)");
+							}
+							__finally {
+								delete jsonRootRef;
+							}
+						}
+					}
+					// =========================================================
+				}
+				else {
+					ShowMessage("Error al asignar: " + respuesta);
+				}
+			}
+		}
+		else {
+			ShowMessage("No seleccionaste ningún alumno.");
+		}
+	}
+	delete ventana;
 }
+
+
+
 
 
 void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
@@ -704,6 +753,7 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 	}
 	delete ventana;
 }
+
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 

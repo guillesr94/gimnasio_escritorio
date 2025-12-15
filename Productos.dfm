@@ -54,12 +54,4 @@ object Productos: TProductos
     TabOrder = 3
     OnClick = BtnVentanaProductosClick
   end
-  object ListProducts: TListBox
-    Left = 32
-    Top = 88
-    Width = 483
-    Height = 345
-    ItemHeight = 15
-    TabOrder = 4
-  end
 end

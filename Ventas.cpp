@@ -62,7 +62,7 @@ void __fastcall TVentas::BtnVentanaProductosClick(TObject *Sender)
 __fastcall TVentas::TVentas(TComponent* Owner)
 	: TForm(Owner)
 {
-    // 1. CONFIGURAR LA TABLA VISUALMENTE
+	// 1. CONFIGURAR LA TABLA VISUALMENTE
 	if (GridProductos) {
         // Definimos 3 columnas: Producto, Precio, Stock
         GridProductos->ColCount = 4;
@@ -80,7 +80,7 @@ __fastcall TVentas::TVentas(TComponent* Owner)
     }
 
 	// 2. LLAMAR A LA FUNCIÓN DE CARGA
-    CargarDatosEnLaGrilla();
+	CargarDatosEnLaGrilla();
 }
 
 //---------------------------------------------------------------------------
@@ -98,7 +98,7 @@ void TVentas::CargarDatosEnLaGrilla()
     }
 
 	// Parseo JSON
-    TJSONObject* json = (TJSONObject*)TJSONObject::ParseJSONValue(respuesta);
+	TJSONObject* json = (TJSONObject*)TJSONObject::ParseJSONValue(respuesta);
 
     if (json) {
         try {
@@ -116,7 +116,7 @@ void TVentas::CargarDatosEnLaGrilla()
 
                     // Llenamos las celdas
 					GridProductos->Cells[0][fila] = prod->GetValue("nombre")->Value();
-                    GridProductos->Cells[1][fila] = "$" + prod->GetValue("precio")->Value();
+					GridProductos->Cells[1][fila] = "$" + prod->GetValue("precio")->Value();
 					GridProductos->Cells[2][fila] = prod->GetValue("stock")->Value();
 					GridProductos->Cells[3][fila] = "0";
 				}
@@ -143,8 +143,8 @@ void __fastcall TVentas::GridProductosSelectCell(TObject *Sender, System::LongIn
 //---------------------------------------------------------------------------
 
 
+
 void __fastcall TVentas::CalcularTotalClick(TObject *Sender)
-{
 {
     double granTotal = 0;
     String mensajeResumen = "DETALLE DE LA COMPRA:\n\n";
@@ -157,29 +157,45 @@ void __fastcall TVentas::CalcularTotalClick(TObject *Sender)
         String sCant = GridProductos->Cells[3][i];
         int cantidad = StrToIntDef(sCant, 0);
 
-        // Si la cantidad es 0, saltamos al siguiente producto
+        // Si la cantidad es 0, pasamos al siguiente
         if (cantidad <= 0) continue;
 
-        // 2. OBTENER PRECIO (LIMPIEZA PROFUNDA)
+        // --- NUEVO: VALIDACIÓN DE STOCK ---
+        // Leemos la columna 2 (STOCK)
+        String sStock = GridProductos->Cells[2][i];
+        int stock = StrToIntDef(sStock, 0);
+
+        // Comprobamos si pide más de lo que hay
+	if (cantidad > stock) {
+            String nombreProd = GridProductos->Cells[0][i];
+
+            // CONSTRUIMOS EL MENSAJE PASO A PASO (PARA EVITAR EL ERROR)
+            String errorMsg = "¡ERROR DE STOCK!\n\n";
+            errorMsg = errorMsg + "Producto: " + nombreProd + "\n";
+            errorMsg = errorMsg + "Pediste: " + IntToStr(cantidad) + "\n";
+            errorMsg = errorMsg + "Disponible: " + IntToStr(stock) + "\n\n";
+            errorMsg = errorMsg + "Por favor corrige la cantidad.";
+
+            ShowMessage(errorMsg);
+            return; // FRENA TODO
+		}
+        // ----------------------------------
+
+        // 2. OBTENER PRECIO (Con la limpieza que arreglamos antes)
         String sPrecio = GridProductos->Cells[1][i];
 
-        // A. Quitamos el signo $
+        // Limpieza de signo $ y espacios
         sPrecio = StringReplace(sPrecio, "$", "", TReplaceFlags() << rfReplaceAll);
-
-        // B. Quitamos espacios en blanco
         sPrecio = sPrecio.Trim();
 
-        // C. ARREGLO DE PUNTO Y COMA (CRUCIAL)
-        // Si tu PC usa coma para decimales (común en español), cambiamos punto por coma.
+        // Arreglo de punto/coma según tu Windows
         if (FormatSettings.DecimalSeparator == ',') {
              sPrecio = StringReplace(sPrecio, ".", ",", TReplaceFlags() << rfReplaceAll);
         }
-        // Si tu PC usa punto (inglés), cambiamos coma por punto.
         else if (FormatSettings.DecimalSeparator == '.') {
              sPrecio = StringReplace(sPrecio, ",", ".", TReplaceFlags() << rfReplaceAll);
         }
 
-        // Ahora sí convertimos
         double precio = StrToFloatDef(sPrecio, 0);
 
         // 3. CALCULAR SUBTOTAL
@@ -187,10 +203,8 @@ void __fastcall TVentas::CalcularTotalClick(TObject *Sender)
         granTotal += subtotal;
         comproAlgo = true;
 
-        // 4. AGREGAR AL TEXTO DEL MENSAJE
+        // 4. AGREGAR AL RESUMEN
         String nombre = GridProductos->Cells[0][i];
-
-        // Formato visual
         mensajeResumen += nombre + "\n";
         mensajeResumen += "   " + IntToStr(cantidad) + " x $" + FormatFloat("0.00", precio)
                        + " = $" + FormatFloat("0.00", subtotal) + "\n";
@@ -205,8 +219,7 @@ void __fastcall TVentas::CalcularTotalClick(TObject *Sender)
     mensajeResumen += "\n-----------------------------------\n";
     mensajeResumen += "TOTAL A PAGAR: $" + FormatFloat("0.00", granTotal);
 
-	ShowMessage(mensajeResumen);
-}
+    ShowMessage(mensajeResumen);
 }
 
 //---------------------------------------------------------------------------
