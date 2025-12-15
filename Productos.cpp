@@ -13,10 +13,7 @@
 #pragma resource "*.dfm"
 TProductos *Productos;
 //---------------------------------------------------------------------------
-__fastcall TProductos::TProductos(TComponent* Owner)
-	: TForm(Owner)
-{
-}
+
 //---------------------------------------------------------------------------
 void __fastcall TProductos::BtnVentanaProfesoresClick(TObject *Sender)
 {
@@ -40,7 +37,7 @@ void __fastcall TProductos::BtnVentanaCLientesClick(TObject *Sender)
 
 void __fastcall TProductos::BtnVentanaVentasClick(TObject *Sender)
 {
-    Ventas = new TVentas(this);
+	Ventas = new TVentas(this);
 	Ventas->Show();
 
 
@@ -50,7 +47,7 @@ void __fastcall TProductos::BtnVentanaVentasClick(TObject *Sender)
 
 void __fastcall TProductos::BtnVentanaProductosClick(TObject *Sender)
 {
-    Productos = new TProductos(this);
+	Productos = new TProductos(this);
 	Productos->Show();
 
 
@@ -58,3 +55,22 @@ void __fastcall TProductos::BtnVentanaProductosClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
+__fastcall TProductos::TProductos(TComponent* Owner)
+	: TForm(Owner)
+{
+	// Verificamos que el componente exista para evitar errores
+	if (listProducts) {
+		listProducts->Items->Clear(); // Limpiamos cualquier texto viejo
+
+		// Agregamos un encabezado
+		listProducts->Items->Add("ID   PRODUCTO                  PRECIO");
+		listProducts->Items->Add("-----------------------------------------");
+
+		// Agregamos los productos de prueba
+		listProducts->Items->Add("1    Botella de Agua 500ml     $500.00");
+		listProducts->Items->Add("2    Gatorade                  $1200.00");
+		listProducts->Items->Add("3    Proteína Whey             $2500.00");
+		listProducts->Items->Add("4    Toalla de Mano            $3000.00");
+		listProducts->Items->Add("5    Barrita de Cereal         $800.00");
+	}
+}

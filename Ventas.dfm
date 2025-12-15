@@ -18,6 +18,13 @@ object Ventas: TVentas
     Height = 15
     Caption = 'Ventas'
   end
+  object Total: TLabel
+    Left = 56
+    Top = 376
+    Width = 65
+    Height = 15
+    Caption = 'Total'
+  end
   object BtnVentanaProfesores: TButton
     Left = 32
     Top = 8
@@ -53,5 +60,14 @@ object Ventas: TVentas
     Caption = 'Productos'
     TabOrder = 3
     OnClick = BtnVentanaProductosClick
+  end
+  object GridProductos: TStringGrid
+    Left = 8
+    Top = 93
+    Width = 545
+    Height = 260
+    FixedCols = 0
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goFixedRowDefAlign]
+    TabOrder = 4
   end
 end

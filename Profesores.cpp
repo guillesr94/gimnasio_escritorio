@@ -224,38 +224,103 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 //---------------------------------------------------------------------------
 void __fastcall TProfesores::ClickMostrarMas(TObject *Sender)
 {
-	TButton *btn = (TButton*)Sender;
-	TPanel *header = (TPanel*)btn->Parent;
-	TPanel *fila = (TPanel*)header->Parent;
+    TButton *btn = (TButton*)Sender;
+    TPanel *header = (TPanel*)btn->Parent;
+    TPanel *fila = (TPanel*)header->Parent;
 
-	// Buscar panel detalles
-	TPanel *detalles = NULL;
-	for(int i=0; i<fila->ControlCount; i++) {
-		if(fila->Controls[i]->Tag == 99) detalles = (TPanel*)fila->Controls[i];
-	}
+    // Buscar panel detalles (Tag 99)
+    TPanel *detalles = NULL;
+    for(int i=0; i<fila->ControlCount; i++) {
+        if(fila->Controls[i]->Tag == 99) detalles = (TPanel*)fila->Controls[i];
+    }
 
-	bool abrir = (fila->Height == 40);
+    bool abrir = (fila->Height == 40);
 
-	if (abrir)
-	{
-		fila->Height = 250; // Altura expandida
-		btn->Caption = "^";
-		if(detalles) detalles->Visible = true;
-	}
-	else
-	{
-		if(detalles) detalles->Visible = false;
-		fila->Height = 40;
-		btn->Caption = "v";
-	}
+    if (abrir)
+    {
+        // 1. Expandir fila
+        fila->Height = 350; // AUMENTAMOS LA ALTURA PARA QUE QUEPA LA LISTA
+        btn->Caption = "^";
+        if(detalles) detalles->Visible = true;
 
-	// Mostramos o ocultamos los botones.Si agregamos solo agregamos t == numero asignado
-	for(int i=0; i<header->ControlCount; i++) {
-		int t = header->Controls[i]->Tag;
-		if(t == 10 || t == 20 || t == 30 || t == 40) {
-			header->Controls[i]->Visible = abrir;
-		}
-	}
+        // ---------------------------------------------------------
+        // NUEVO: CARGAR ALUMNOS SI NO EXISTEN
+        // Buscamos si ya existe la lista (le pondremos Tag 500)
+        // ---------------------------------------------------------
+        bool listaYaCargada = false;
+        if(detalles) {
+            for(int k=0; k < detalles->ControlCount; k++) {
+                if(detalles->Controls[k]->Tag == 500) listaYaCargada = true;
+            }
+        }
+
+        if(detalles && !listaYaCargada)
+        {
+            // A. Obtener ID del profesor del TEdit oculto (Tag 5)
+            String idProfesor = "";
+            for(int k=0; k < detalles->ControlCount; k++) {
+                TEdit *ed = dynamic_cast<TEdit*>(detalles->Controls[k]);
+                if(ed && ed->Tag == 5) idProfesor = ed->Text;
+            }
+
+            // B. Crear TListBox visualmente
+            TLabel *lblAlumnos = new TLabel(detalles);
+            lblAlumnos->Parent = detalles;
+            lblAlumnos->Align = alBottom;
+            lblAlumnos->Caption = "Alumnos Asignados:";
+            lblAlumnos->Font->Style = TFontStyles() << fsBold;
+            lblAlumnos->Margins->Top = 10;
+            lblAlumnos->AlignWithMargins = true;
+
+            TListBox *lb = new TListBox(detalles);
+            lb->Parent = detalles;
+            lb->Align = alBottom;
+            lb->Height = 100; // Altura de la lista
+            lb->Tag = 500;    // Marcamos para no volver a cargar
+            lb->AlignWithMargins = true;
+
+            // C. Llamar al PHP
+            if(!idProfesor.IsEmpty()) {
+                String body = "profesor_id=" + idProfesor;
+                String json = HttpPost(L"/gimnasio_api/Admin/consultar_alumnos_de_profesor.php", body);
+
+                // Parsear JSON
+                TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
+                if(jsonRoot) {
+                    try {
+                        TJSONArray* arr = (TJSONArray*)jsonRoot->GetValue("data");
+                        if(arr && !arr->Null) {
+                            for(int i=0; i < arr->Count; i++) {
+                                TJSONObject* obj = (TJSONObject*)arr->Items[i];
+                                String nom = obj->GetValue("nombre")->Value();
+                                String ape = obj->GetValue("apellido")->Value();
+                                lb->Items->Add(" - " + nom + " " + ape);
+                            }
+                        }
+                        if(lb->Items->Count == 0) lb->Items->Add("(Sin alumnos asignados)");
+                    }
+                    __finally {
+                        delete jsonRoot;
+                    }
+                }
+            }
+        }
+        // ---------------------------------------------------------
+    }
+    else
+    {
+        if(detalles) detalles->Visible = false;
+        fila->Height = 40;
+        btn->Caption = "v";
+    }
+
+    // Botones de cabecera
+    for(int i=0; i<header->ControlCount; i++) {
+        int t = header->Controls[i]->Tag;
+        if(t == 10 || t == 20 || t == 30 || t == 40) {
+            header->Controls[i]->Visible = abrir;
+        }
+    }
 }
 
 //---------------------------------------------------------------------------
