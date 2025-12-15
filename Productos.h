@@ -20,12 +20,15 @@ __published:	// IDE-managed Components
 	TButton *BtnVentanaProductos;
 	TStringGrid *GridInventario;
 	TButton *actualizarDatosProductos;
-	TButton *Button2;
+	TButton *agregarProducto;
+	TButton *eliminarProducto;
 	void __fastcall BtnVentanaProfesoresClick(TObject *Sender);
 	void __fastcall BtnVentanaCLientesClick(TObject *Sender);
 	void __fastcall BtnVentanaVentasClick(TObject *Sender);
 	void __fastcall BtnVentanaProductosClick(TObject *Sender);
 	void __fastcall actualizarDatosProductosClick(TObject *Sender);
+	void __fastcall agregarProductoClick(TObject *Sender);
+	void __fastcall eliminarProductoClick(TObject *Sender);
 private:
     void CargarInventario();
 public:		// User declarations

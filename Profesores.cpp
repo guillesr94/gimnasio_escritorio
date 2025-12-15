@@ -65,12 +65,12 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 {
 	if (this->CanFocus()) this->SetFocus();
 
-	// 1. Limpiar lista anterior
+
 	for (int i = ScrollBoxProfesores->ControlCount - 1; i >= 0; i--) {
 		delete ScrollBoxProfesores->Controls[i];
 	}
 
-	// 2. Pedir datos al PHP de Profesores
+
 	String json = HttpPost(L"/gimnasio_api/Admin/consultar_lista_profesores.php", "");
 
 	TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
@@ -87,7 +87,7 @@ void __fastcall TProfesores::FormShow(TObject *Sender)
 				{
 					TJSONObject* profe = (TJSONObject*)dataArray->Items[i];
 
-					// --- EXTRAER DATOS ---
+
 					String id = profe->GetValue("id")->Value();
 					String nombre = profe->GetValue("nombre")->Value();
 					String apellido = profe->GetValue("apellido")->Value();
@@ -641,7 +641,7 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 										lbProfesor->Items->Add(" - " + nom + " " + ape);
 									}
 								}
-								// Si quedó vacía (raro porque acabamos de agregar uno), aviso visual
+
 								if(lbProfesor->Items->Count == 0) lbProfesor->Items->Add("(Sin alumnos asignados)");
 							}
 							__finally {
@@ -669,7 +669,7 @@ void __fastcall TProfesores::ClickEliminar(TObject *Sender)
 
 void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 {
-	// 1. Crear la ventana modal dinámicamente
+
 	TForm *ventana = new TForm(this);
 	ventana->Caption = "Nuevo Profesor";
 	ventana->Width = 350;
@@ -677,39 +677,37 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 	ventana->Position = poMainFormCenter;
 	ventana->BorderStyle = bsDialog;
 
-	// --- CAMPOS DE TEXTO ---
 
-	// 1. NOMBRE
 	TEdit *eNombre = new TEdit(ventana);
 	eNombre->Parent = ventana;
 	eNombre->Left = 40; eNombre->Top = 30; eNombre->Width = 250;
 	eNombre->TextHint = "Nombre";
 
-	// 2. APELLIDO
+
 	TEdit *eApellido = new TEdit(ventana);
 	eApellido->Parent = ventana;
 	eApellido->Left = 40; eApellido->Top = 80; eApellido->Width = 250;
 	eApellido->TextHint = "Apellido";
 
-	// 3. DNI
+
 	TEdit *eDNI = new TEdit(ventana);
 	eDNI->Parent = ventana;
 	eDNI->Left = 40; eDNI->Top = 130; eDNI->Width = 250;
 	eDNI->TextHint = "DNI";
 
-	// 4. EMAIL
+
 	TEdit *eEmail = new TEdit(ventana);
 	eEmail->Parent = ventana;
 	eEmail->Left = 40; eEmail->Top = 180; eEmail->Width = 250;
 	eEmail->TextHint = "Email";
 
-	// 5. CONTRASEÑA
+
 	TEdit *ePass = new TEdit(ventana);
 	ePass->Parent = ventana;
 	ePass->Left = 40; ePass->Top = 230; ePass->Width = 250;
 	ePass->TextHint = "Contraseña";
 
-	// 6. BOTON GUARDAR
+	//  boton guardar----------
 	TButton *btnGuardar = new TButton(ventana);
 	btnGuardar->Parent = ventana;
 	btnGuardar->Left = 40; btnGuardar->Top = 300;
@@ -717,23 +715,23 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 	btnGuardar->Caption = "GUARDAR PROFESOR";
 	btnGuardar->ModalResult = mrOk;
 
-	// --- MOSTRAR VENTANA Y PROCESAR ---
+	//
 	if (ventana->ShowModal() == mrOk)
 	{
-		// Validamos datos obligatorios
+
 		if(eNombre->Text.IsEmpty() || eApellido->Text.IsEmpty() || eDNI->Text.IsEmpty()) {
 			ShowMessage("Faltan datos obligatorios (Nombre, Apellido, DNI).");
 		}
 		else
 		{
-			// Preparamos los datos
+
 			String body = "nombre=" + eNombre->Text +
 						  "&apellido=" + eApellido->Text +
 						  "&dni=" + eDNI->Text +
 						  "&email=" + eEmail->Text +
 						  "&contrasena=" + ePass->Text;
 
-			// Enviar al PHP de crear profesor
+
 			String resp = HttpPost(L"/gimnasio_api/Admin/crear_profesor.php", body);
 
 			if (resp.Pos("Duplicate") > 0 && resp.Pos("dni") > 0)
@@ -743,7 +741,7 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 			else if (resp.Pos("success") > 0)
 			{
 				ShowMessage("Profesor creado correctamente.");
-				FormShow(this); // Recargar la lista de profesores
+				FormShow(this);
 			}
 			else
 			{
@@ -755,5 +753,5 @@ void __fastcall TProfesores::AgregarProfesorClick(TObject *Sender)
 }
 
 //---------------------------------------------------------------------------
-//---------------------------------------------------------------------------
+
 

@@ -71,12 +71,22 @@ object Productos: TProductos
     TabOrder = 5
     OnClick = actualizarDatosProductosClick
   end
-  object Button2: TButton
+  object agregarProducto: TButton
     Left = 32
     Top = 97
     Width = 75
     Height = 25
     Caption = 'Agregar'
     TabOrder = 6
+    OnClick = agregarProductoClick
+  end
+  object eliminarProducto: TButton
+    Left = 304
+    Top = 97
+    Width = 75
+    Height = 25
+    Caption = 'Eliminar'
+    TabOrder = 7
+    OnClick = eliminarProductoClick
   end
 end

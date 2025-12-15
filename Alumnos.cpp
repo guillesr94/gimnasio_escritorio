@@ -66,16 +66,15 @@ void __fastcall TAlumnos::BtnVentanaProductosClick(TObject *Sender)
 
 void __fastcall TAlumnos::FormShow(TObject *Sender)
 {
-	// 0. TRUCO PARA EVITAR EL ERROR "CANNOT FOCUS":
-	// Pasamos el foco al formulario principal antes de borrar los botones.
+
 	if (this->CanFocus()) this->SetFocus();
 
-	// 1. Limpiar lista anterior
+
 	for (int i = ScrollBoxAlumnos->ControlCount - 1; i >= 0; i--) {
 		delete ScrollBoxAlumnos->Controls[i];
 	}
 
-	// 2. Pedir datos
+
 	String json = HttpPost(L"/gimnasio_api/Admin/consultar_lista_alumnos.php", "");
 	TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(json);
 
@@ -91,7 +90,6 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 				{
 					TJSONObject* alumno = (TJSONObject*)dataArray->Items[i];
 
-					// --- EXTRAER DATOS ---
 					String id = alumno->GetValue("id")->Value();
 					String nombre = alumno->GetValue("nombre")->Value();
 					String apellido = alumno->GetValue("apellido")->Value();
@@ -104,7 +102,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					int posSalto = email.Pos("\n");
 					if(posSalto > 0) email = email.SubString(1, posSalto - 1);
 
-					// --- FILA PRINCIPAL ---
+
 					TPanel *fila = new TPanel(ScrollBoxAlumnos);
 					fila->Parent = ScrollBoxAlumnos;
 					fila->Align = alTop;
@@ -113,7 +111,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					fila->BevelOuter = bvNone;
 					fila->Padding->SetBounds(5, 0, 5, 2);
 
-					// --- CABECERA ---
+
 					TPanel *header = new TPanel(fila);
 					header->Parent = fila;
 					header->Align = alTop;
@@ -143,11 +141,11 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 
 					TButton *btnEliminar = new TButton(header);
                     btnEliminar->Parent = header;
-					btnEliminar->Caption = "Eliminar"; // Texto del botón
+					btnEliminar->Caption = "Eliminar";
 					btnEliminar->Width = 60;
-                    btnEliminar->Align = alRight;      // Se alineará a la izquierda de 'Editar'
+					btnEliminar->Align = alRight;
 					btnEliminar->AlignWithMargins = true;
-					btnEliminar->Visible = false;      // Oculto al inicio igual que los otros
+					btnEliminar->Visible = false;
 					btnEliminar->Tag = 30;
 					btnEliminar->OnClick = ClickEliminar;
 
@@ -160,7 +158,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					lblTitulo->Font->Size = 10;
 					lblTitulo->Font->Style = TFontStyles() << fsBold;
 
-					// --- PANEL DE DETALLES ---
+
 					TPanel *pnlDetalles = new TPanel(fila);
 					pnlDetalles->Parent = fila;
 					pnlDetalles->Align = alClient;
@@ -172,7 +170,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 					pnlDetalles->ParentBackground = false;
 					pnlDetalles->Padding->SetBounds(20, 10, 20, 10);
 
-					// FUNCION CREAR CAMPO
+
 					auto CrearCampo = [&](String titulo, String valor, int tagID, bool visible) {
 						TEdit *e = new TEdit(pnlDetalles);
 						e->Parent = pnlDetalles;
@@ -185,10 +183,10 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 						e->AlignWithMargins = true;
 						e->Tag = tagID;
 
-						// --- CORRECCION CRÍTICA AQUÍ ---
+
 						e->Visible = visible;
 						if (!visible) {
-							e->TabStop = false; // IMPORTANTE: Si es invisible, que no agarre foco nunca
+							e->TabStop = false;
 						}
 						// ------------------------------
 
@@ -204,7 +202,7 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 						}
 					};
 
-					// --- CREACION (Orden Inverso) ---
+
 					CrearCampo("Rutina", id_rutina, 8, false);
 					CrearCampo("Fecha", fecha_venc, 7, false);
 					CrearCampo("Pass", contrasena, 6, false);
@@ -226,16 +224,14 @@ void __fastcall TAlumnos::FormShow(TObject *Sender)
 
 
 
-//---------------------------------------------------------------------------
-// 2. LOGICA DE DESPLEGAR (AUMENTADA LA ALTURA PARA QUE QUEPAN LOS CAMPOS)
-//---------------------------------------------------------------------------
+
 void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 {
 	TButton *btn = (TButton*)Sender;
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// Buscar panel detalles
+
 	TPanel *detalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) detalles = (TPanel*)fila->Controls[i];
@@ -256,20 +252,19 @@ void __fastcall TAlumnos::ClickMostrarMas(TObject *Sender)
 		btn->Caption = "v";
 	}
 
-	// ---------------------------------------------------------
-	// LOGICA DE VISIBILIDAD DE BOTONES
+
+	// botones visibles
 	// ---------------------------------------------------------
 	for(int i=0; i<header->ControlCount; i++) {
 		int t = header->Controls[i]->Tag;
 
-		// Si es Editar(10), Guardar(20) o Eliminar(30)
+
 		if(t == 10 || t == 20 || t == 30) {
 			header->Controls[i]->Visible = abrir;
 		}
 	}
 }
-//---------------------------------------------------------------------------
-// 3. LOGICA BOTON EDITAR (SIN CAMBIOS, SOLO PARA REFERENCIA)
+
 //---------------------------------------------------------------------------
 void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 {
@@ -277,30 +272,30 @@ void __fastcall TAlumnos::ClickEditar(TObject *Sender)
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// 1. Mostrar botón Guardar (pero SIN ocultar el botón Editar)
+
 	for(int i=0; i<header->ControlCount; i++) {
 		if(header->Controls[i]->Tag == 20) header->Controls[i]->Visible = true;
 	}
 
-	// 2. Buscar el panel de detalles
+
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
 	}
 
-	// 3. Convertir campos en TextFields editables
+
 	if(pnlDetalles) {
 		bool primerFoco = true;
 		for(int i=0; i<pnlDetalles->ControlCount; i++) {
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 
-			// Solo modificamos si es un Edit VISIBLE
-			if(ed && ed->Visible) {
-				ed->ReadOnly = false;       // Permite escribir
-				ed->BorderStyle = bsSingle; // Pone borde de caja
-				ed->Color = clWindow;       // Pone fondo blanco
 
-				// Poner el foco en el primer campo (Nombre)
+			if(ed && ed->Visible) {
+				ed->ReadOnly = false;
+				ed->BorderStyle = bsSingle;
+				ed->Color = clWindow;
+
+
 				if(primerFoco) {
 					ed->SetFocus();
 					primerFoco = false;
@@ -317,7 +312,7 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 	TPanel *header = (TPanel*)btn->Parent;
 	TPanel *fila = (TPanel*)header->Parent;
 
-	// 1. Buscar el panel de detalles
+
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
@@ -327,13 +322,13 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 	{
 		String id, nombre, apellido, dni, email, pass, fecha, rutina;
 
-		// 2. Leer datos y BLOQUEAR LOS CAMPOS (Para simular que se guardó)
+
 		for (int i = 0; i < pnlDetalles->ControlCount; i++)
 		{
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 			if (ed)
 			{
-				// Leemos el valor
+
 				switch (ed->Tag) {
 					case 1: nombre = ed->Text; break;
 					case 2: apellido = ed->Text; break;
@@ -345,19 +340,18 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 					case 8: rutina = ed->Text; break;
 				}
 
-				// --- AQUÍ ESTA EL TRUCO PARA QUE NO DE ERROR ---
-				// En lugar de recargar todo, solo volvemos a poner los campos en modo lectura
+
 				if(ed->Visible) {
-					ed->ReadOnly = true;         // Bloqueamos escritura
-					ed->BorderStyle = bsNone;    // Quitamos borde
-					ed->Color = clWhite;         // Fondo blanco limpio
+					ed->ReadOnly = true;
+					ed->BorderStyle = bsNone;
+					ed->Color = clWhite;
 				}
 			}
 		}
 
 		if (id.IsEmpty()) return;
 
-		// 3. Enviar al servidor
+
 		String body = "id=" + id + "&nombre=" + nombre + "&apellido=" + apellido +
 					  "&dni=" + dni + "&email=" + email + "&contrasena=" + pass +
 					  "&fecha_vencimiento=" + fecha + "&id_rutina=" + rutina;
@@ -365,7 +359,7 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 		String respuesta = HttpPost(L"/gimnasio_api/Admin/guardar_cambios_alumno.php", body);
 		ShowMessage(respuesta);
 
-		// 4. ACTUALIZAR EL TITULO DEL ALUMNO (Por si cambiaste el nombre)
+
 		for(int i=0; i<header->ControlCount; i++) {
 			TLabel *lbl = dynamic_cast<TLabel*>(header->Controls[i]);
 			if(lbl) {
@@ -373,13 +367,17 @@ void __fastcall TAlumnos::ClickGuardar(TObject *Sender)
 			}
 		}
 
-		// 5. IMPORTANTE: ¡ELIMINA LA LLAMADA A FormShow!
-		// FormShow(this);  <--- ESTO ERA LO QUE CAUSABA EL ERROR
+
 	}
 }
+
+
+
+
+
 void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 {
-	// 1. Crear la ventana
+
 	TForm *ventana = new TForm(this);
 	ventana->Caption = "Nuevo Alumno";
 	ventana->Width = 350;
@@ -387,43 +385,42 @@ void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 	ventana->Position = poMainFormCenter;
 	ventana->BorderStyle = bsDialog;
 
-	// --- CAMPOS DE TEXTO ---
+	// --- inputs
 
-	// 1. NOMBRE
 	TEdit *eNombre = new TEdit(ventana);
 	eNombre->Parent = ventana;
 	eNombre->Left = 40; eNombre->Top = 30; eNombre->Width = 250; eNombre->TextHint = "Nombre";
 
-	// 2. APELLIDO
+
 	TEdit *eApellido = new TEdit(ventana);
 	eApellido->Parent = ventana;
 	eApellido->Left = 40; eApellido->Top = 80; eApellido->Width = 250; eApellido->TextHint = "Apellido";
 
-	// 3. DNI
+
 	TEdit *eDNI = new TEdit(ventana);
 	eDNI->Parent = ventana;
 	eDNI->Left = 40; eDNI->Top = 130; eDNI->Width = 250; eDNI->TextHint = "DNI";
 
-	// 4. EMAIL
+
 	TEdit *eEmail = new TEdit(ventana);
 	eEmail->Parent = ventana;
 	eEmail->Left = 40; eEmail->Top = 180; eEmail->Width = 250; eEmail->TextHint = "Email";
 
-	// 5. CONTRASEÑA
+
 	TEdit *ePass = new TEdit(ventana);
 	ePass->Parent = ventana;
 	ePass->Left = 40; ePass->Top = 230; ePass->Width = 250; ePass->TextHint = "Contraseña";
 
-	// 6. COMBOBOX PROFESORES
+
 	TComboBox *cbProfes = new TComboBox(ventana);
 	cbProfes->Parent = ventana;
 	cbProfes->Left = 40;
-	cbProfes->Top = 280; // Posición correcta
+	cbProfes->Top = 280;
 	cbProfes->Width = 250;
 	cbProfes->TextHint = "Seleccionar Profesor";
 	cbProfes->Style = csDropDownList;
 
-	// --- CARGAR PROFESORES (Lógica Corregida) ---
+
 	try {
 		String jsonProfes = HttpPost(L"/gimnasio_api/Admin/consultar_lista_profesores.php", "");
 		TJSONObject* jsonRoot = (TJSONObject*)TJSONObject::ParseJSONValue(jsonProfes);
@@ -439,11 +436,10 @@ void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 					String nom = profe->GetValue("nombre")->Value();
 					String ape = profe->GetValue("apellido")->Value();
 
-					// CORRECCION 1: Convertir ID de manera segura
+
 					int idProfe = profe->GetValue("id")->Value().ToInt();
 
-					// Guardamos el ID dentro del objeto del ComboBox
-					// Usamos (INT_PTR) para evitar errores en 64 bits
+
 					cbProfes->Items->AddObject(nom + " " + ape, (TObject*)(INT_PTR)idProfe);
 				}
 			}
@@ -454,18 +450,18 @@ void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 		cbProfes->TextHint = "Error al cargar profes";
 	}
 
-	// 7. BOTON GUARDAR (Movido mas abajo para que no se encime)
+
 	TButton *btnGuardar = new TButton(ventana);
 	btnGuardar->Parent = ventana;
 	btnGuardar->Left = 40;
-	btnGuardar->Top = 340; // <--- BAJAMOS EL BOTÓN
+	btnGuardar->Top = 340;
 	btnGuardar->Width = 250;
 	btnGuardar->Height = 45;
 	btnGuardar->Caption = "GUARDAR ALUMNO";
 	btnGuardar->ModalResult = mrOk;
 
 
-	// --- MOSTRAR Y PROCESAR ---
+
 	if (ventana->ShowModal() == mrOk)
 	{
 		if(eNombre->Text.IsEmpty() || eApellido->Text.IsEmpty() || eDNI->Text.IsEmpty()) {
@@ -473,17 +469,16 @@ void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 		}
 		else
 		{
-			// --- RECUPERAR ID DEL PROFESOR SELECCIONADO ---
+
 			String idProfesorSeleccionado = "0";
 
 			if (cbProfes->ItemIndex >= 0) {
-				// CORRECCION 2: Recuperar el ID evitando el error de cast
-				// Primero a (INT_PTR) y luego a (int)
+
 				int id = (int)(INT_PTR)cbProfes->Items->Objects[cbProfes->ItemIndex];
 				idProfesorSeleccionado = IntToStr(id);
 			}
 
-			// Preparamos el cuerpo
+
 			String body = "nombre=" + eNombre->Text +
 						  "&apellido=" + eApellido->Text +
 						  "&dni=" + eDNI->Text +
@@ -491,7 +486,7 @@ void __fastcall TAlumnos::AgregarAlumnoClick(TObject *Sender)
 						  "&contrasena=" + ePass->Text +
 						  "&id_profesor=" + idProfesorSeleccionado;
 
-			// Enviamos
+			// usamos el php
 			String resp = HttpPost(L"/gimnasio_api/Admin/crear_alumno.php", body);
 
 			if (resp.Pos("Duplicate") > 0 && resp.Pos("dni") > 0) {
@@ -515,9 +510,9 @@ void __fastcall TAlumnos::ClickEliminar(TObject *Sender)
 {
 	TButton *btn = (TButton*)Sender;
 	TPanel *header = (TPanel*)btn->Parent;
-	TPanel *fila = (TPanel*)header->Parent; // Esta es la fila completa
+	TPanel *fila = (TPanel*)header->Parent;
 
-	// 1. Buscamos el panel de detalles oculto
+
 	TPanel *pnlDetalles = NULL;
 	for(int i=0; i<fila->ControlCount; i++) {
 		if(fila->Controls[i]->Tag == 99) pnlDetalles = (TPanel*)fila->Controls[i];
@@ -528,7 +523,7 @@ void __fastcall TAlumnos::ClickEliminar(TObject *Sender)
 		String nombre = "";
 		String apellido = "";
 
-		// 2. Extraemos ID, Nombre y Apellido
+
 		for(int i=0; i<pnlDetalles->ControlCount; i++) {
 			TEdit *ed = dynamic_cast<TEdit*>(pnlDetalles->Controls[i]);
 			if(ed) {
@@ -540,30 +535,26 @@ void __fastcall TAlumnos::ClickEliminar(TObject *Sender)
 
 		if(id.IsEmpty()) return;
 
-		// 3. Confirmación
+
 		String mensaje = "¿Seguro que quieres eliminar al alumno: " + nombre + " " + apellido + "?";
 
 		if(MessageDlg(mensaje, mtConfirmation, TMsgDlgButtons() << mbYes << mbNo, 0) == mrYes)
 		{
-			// A) Preparamos los datos
+
 			String body = "id=" + id;
 
-			// B) Enviamos la petición de borrado
+
 			String respuesta = HttpPost(L"/gimnasio_api/Admin/eliminar_alumno.php", body);
 
-			// C) Verificamos respuesta
+
 			if (respuesta.Pos("success") > 0)
 			{
 				ShowMessage("Alumno eliminado correctamente.");
 
-				// --- CORRECCIÓN CRÍTICA ---
-				// NO llamamos a FormShow(this) porque eso destruye el botón mientras lo usas.
-				// En su lugar, simplemente ocultamos la fila visualmente.
 
-				fila->Visible = false; // Lo hacemos invisible
-				fila->Parent = NULL;   // Lo sacamos de la lista para que las otras filas suban
+				fila->Visible = false;
+				fila->Parent = NULL;
 
-				// Al cerrar la ventana, la memoria se limpiará sola.
 			}
 			else
 			{
