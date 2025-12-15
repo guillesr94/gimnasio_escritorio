@@ -54,4 +54,29 @@ object Productos: TProductos
     TabOrder = 3
     OnClick = BtnVentanaProductosClick
   end
+  object GridInventario: TStringGrid
+    Left = 32
+    Top = 128
+    Width = 489
+    Height = 305
+    Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goFixedRowDefAlign]
+    TabOrder = 4
+  end
+  object actualizarDatosProductos: TButton
+    Left = 168
+    Top = 97
+    Width = 75
+    Height = 25
+    Caption = 'Guardar'
+    TabOrder = 5
+    OnClick = actualizarDatosProductosClick
+  end
+  object Button2: TButton
+    Left = 32
+    Top = 97
+    Width = 75
+    Height = 25
+    Caption = 'Agregar'
+    TabOrder = 6
+  end
 end

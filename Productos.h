@@ -7,6 +7,7 @@
 #include <Vcl.Controls.hpp>
 #include <Vcl.StdCtrls.hpp>
 #include <Vcl.Forms.hpp>
+#include <Vcl.Grids.hpp>
 //---------------------------------------------------------------------------
 
 class TProductos : public TForm
@@ -17,11 +18,16 @@ __published:	// IDE-managed Components
 	TButton *BtnVentanaCLientes;
 	TButton *BtnVentanaVentas;
 	TButton *BtnVentanaProductos;
+	TStringGrid *GridInventario;
+	TButton *actualizarDatosProductos;
+	TButton *Button2;
 	void __fastcall BtnVentanaProfesoresClick(TObject *Sender);
 	void __fastcall BtnVentanaCLientesClick(TObject *Sender);
 	void __fastcall BtnVentanaVentasClick(TObject *Sender);
 	void __fastcall BtnVentanaProductosClick(TObject *Sender);
-private:	// User declarations
+	void __fastcall actualizarDatosProductosClick(TObject *Sender);
+private:
+    void CargarInventario();
 public:		// User declarations
 	__fastcall TProductos(TComponent* Owner);
 };
